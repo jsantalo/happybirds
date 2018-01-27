@@ -2,6 +2,9 @@ import pandas as pd
 from nltk.corpus import stopwords
 from nltk.tokenize import TweetTokenizer
 from sklearn.feature_extraction.text import CountVectorizer
+#pip install emoji #install if not already installed
+import emoji 
+import re
 
 def uppercase_ratio_extract(text):
     upper = 0
@@ -47,6 +50,25 @@ def get_bigram(data):
     return X_2
 
 
+
+def char_is_emoji(character):
+    return character in emoji.UNICODE_EMOJI
+
+def text_has_emoji(text):
+    for character in text:
+        if character in emoji.UNICODE_EMOJI:
+            return True
+    return False
+
+def extract_emojis(a_list):
+    emojis_list = map(lambda x: ''.join(x.split()), emoji.UNICODE_EMOJI.keys())
+    r = re.compile('|'.join(re.escape(p) for p in emojis_list))
+    aux=[' '.join(r.findall(s)) for s in a_list]
+    return(aux)
+
+def add_emoji_column_to_df(df):   
+    df['emoji']=df['text'].apply(lambda x: extract_emojis([x]))
+    return(df)
 
 #unig = get_unigram(texts)
 #unig.toarray()  # matriz de unigrams
