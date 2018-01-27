@@ -27,7 +27,8 @@ def tokenizer_extraction(df):
     return df
 
 
-# unigram
+#data = df["text"]
+
 def get_unigram(data):
     count_model = CountVectorizer(ngram_range=(1, 1))
     X = count_model.fit_transform(data)
@@ -36,7 +37,6 @@ def get_unigram(data):
     return X
 
 
-# bigram
 def get_bigram(data):
     bigram_vectorizer = CountVectorizer(ngram_range=(1, 2), token_pattern=r'\b\w+\b', min_df=1)
     X_2 = bigram_vectorizer.fit_transform(data)
@@ -47,7 +47,7 @@ def get_bigram(data):
     return X_2
 
 
-#texts = df["text"]
+
 #unig = get_unigram(texts)
 #unig.toarray()  # matriz de unigrams
 
