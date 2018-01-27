@@ -1,7 +1,7 @@
 import pandas as pd
 from nltk.corpus import stopwords
 from nltk.tokenize import TweetTokenizer
-
+from sklearn.feature_extraction.text import CountVectorizer
 
 def uppercase_ratio_extract(text):
     upper = 0
@@ -25,3 +25,31 @@ def tokenizer_extraction(df):
     df["words"] = df['list_of_words'].apply(lambda x: ' '.join(x))
 
     return df
+
+
+# unigram
+def get_unigram(data):
+    count_model = CountVectorizer(ngram_range=(1, 1))
+    X = count_model.fit_transform(data)
+    count_model.vocabulary_
+
+    return X
+
+
+# bigram
+def get_bigram(data):
+    bigram_vectorizer = CountVectorizer(ngram_range=(1, 2), token_pattern=r'\b\w+\b', min_df=1)
+    X_2 = bigram_vectorizer.fit_transform(data)
+
+    feature_index = bigram_vectorizer.vocabulary_.get('departure time')  # debug
+    X_2[:, feature_index]  # debug --> donde esta “departure time”
+    bigram_vectorizer.vocabulary_  # debug --> las veces que sale cada bigram
+    return X_2
+
+
+#texts = df["text"]
+#unig = get_unigram(texts)
+#unig.toarray()  # matriz de unigrams
+
+#big = get_bigram(texts)
+#big.toarray()  # matriz --> casi todo 0 porque mucha info
