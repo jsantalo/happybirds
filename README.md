@@ -7,16 +7,16 @@ FE extraction from RAW
 	emojis
 	punctuation signs (!;?;...;..)
 
-Lematizción
-
 CountVectorizer bigrams y trigrams
 	Ignoring case
 	Ignoring punctuation
 	stopwrods
+	Lematizción
 
 
 
 Models
+	Naive bayes
 	SVM-RBF
 	RF
 
