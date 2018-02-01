@@ -40,14 +40,9 @@ def get_unigram(data):
     return X
 
 
-def get_bigram(data):
-    bigram_vectorizer = CountVectorizer(ngram_range=(1, 2), token_pattern=r'\b\w+\b', min_df=1)
-    X_2 = bigram_vectorizer.fit_transform(data)
-
-    feature_index = bigram_vectorizer.vocabulary_.get('departure time')  # debug
-    X_2[:, feature_index]  # debug --> donde esta “departure time”
-    bigram_vectorizer.vocabulary_  # debug --> las veces que sale cada bigram
-    return X_2
+def get_bigram(data,boW_size):
+    bigram_vectorizer = CountVectorizer(ngram_range=(1, 2), token_pattern=r'\b\w+\b',stop_words='english', min_df=1,max_features=boW_size)
+    return bigram_vectorizer.vocabulary_
 
 
 

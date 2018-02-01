@@ -2,9 +2,9 @@ import pandas as pd
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
+import core.transform as trans
 
-
-def obtain_data_representation(df, test=None):
+def obtain_data_representation(df,boW_size=200, test=None):
     # If there is no test data, split the input
     if test is None:
         # Divide data in train and test
@@ -15,7 +15,11 @@ def obtain_data_representation(df, test=None):
         train = df
 
     # Create a Bag of Words (BoW), by using train data only
-    cv = CountVectorizer(max_features=200)
+    vocabular_bi=trans.get_bigram(df.text,boW_size)
+    vocabular_bi.update({'😭':boW_size,'😆':boW_size+1,'👍':boW_size+2})
+    
+    cv = CountVectorizer(vocabulary=vocabular_bi)
+    
     x_train = cv.fit_transform(train['text'])
     y_train = train['airline_sentiment'].values
 
@@ -55,4 +59,4 @@ def train_model(dataset, dmodel, *model_args, **model_kwargs):
         print("Model score is: {}".format(score))
 
     # Done
-    return model, y_pred
+    return model, y_pred,score
