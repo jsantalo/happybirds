@@ -106,3 +106,8 @@ def add_emoji_column_to_df(df):
     df['emoji']=df['text'].apply(lambda x: extract_emojis([x]))
     return(df)
 
+class LemmaTokenizer(object):
+    def __init__(self):
+        self.wnl = WordNetLemmatizer()
+    def __call__(self, doc):
+        return [self.wnl.lemmatize(t) for t in word_tokenize(doc)]
