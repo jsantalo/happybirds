@@ -6,6 +6,8 @@ from sklearn.feature_extraction.text import CountVectorizer
 import emoji 
 import re
 
+
+# Josep
 def uppercase_ratio_extract(text):
     upper = 0
     for char in text:
@@ -14,7 +16,11 @@ def uppercase_ratio_extract(text):
     r = upper / len(text)
     return r
 
+def uppercase_ratio_extract_dataframe(df):
+    df['upper_ratio'] = df['text'].apply(uppercase_ratio_extract)
+    return df
 
+#Bori
 def stop_words_extract(df):
     stop = set(stopwords.words('english'))
     df['tweet_without_stopwords'] = df['text'].apply(lambda x: ' '.join([word for word in x.split() if word not in (stop)]))
