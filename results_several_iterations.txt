@@ -1,0 +1,116 @@
+Summary of results with several sizes of vocabular (Bag of Words [BoW] size), stop words, bi-grams and uni-gram emojis in the BoW:
+	- Emojis in the BoW migth be helping the kNeighborsClassifier - in the class they recommended to use them as a separated feature
+	- I am not sure that stop words are correctly considered, they do not seem to help in some classifiers (BernoulliNB)
+	- BernoulliNB: It behaves better with more terms (around 4000 with the vocabular we can obtain now), but we need to find the proper terms
+	- kNeighborsClassifier: It behaves better with less words (around 100 words)
+	- Bi-grams as obtained now are not helping neither worsening the resutls
+	- We need to properly implement k-fold validation as the results can vary several points from execution to execution --> this was in some class (Oriol or Jordi?)
+	- We have to find the most suited Bag of WRods and then do the fit transform (fitTransfor or tfidf)
+	- apostrophes can't... how we detect them and how to consider them, for example can't is now considered as two terms CAN + T
+	- visualization, we MUST see what words are introduced in the CountVectorizer and how they impact in the classifiers
+
+
+Detail of results with several simulations:
+
+Antes de hacer la media de varias ejecuciones variaba entre 2 y 3 % entre ejecuciones consecutivas
+
+#efficiency with their model, 200 words
+#Model score is BernoulliNB: 0.7408925318761385
+#Model score is kNeighborsClassifier: 0.5787795992714025
+
+#removing stop words-english, 200 words
+#Model score is BernoulliNB: 0.7299635701275046
+#Model score is kNeighborsClassifier: 0.6334244080145719
+
+#removing stop words-english, 300 words
+#Model score is BernoulliNB: 0.7413479052823315
+#Model score is kNeighborsClassifier: 0.6179417122040073
+
+#removing stop words-english, 150 words
+#Model score is BernoulliNB: 0.6999089253187614
+#Model score is kNeighborsClassifier: 0.6161202185792349
+
+#removing stop words-english y con ascii, 200 words
+#Model score is BernoulliNB: 0.7181238615664846
+#Model score is kNeighborsClassifier: 0.6147540983606558
+
+Añado un 10-fold cutre, ya se que no está bien pero me da idea del orden de magnitud, varía menos del 0.5 % entre dos iteraciones seguidas
+(el vocabular se tiene que limpiar cada vez!!)
+Con binomios, 400 palabras, stop_word=english y con 3 emoticonos
+#Model score is BernoulliNB: 0.7378
+#Model score is kNeighborsClassifier: 0.599
+
+Con binomios, 200 palabras, stop_word=english y con 3 emoticonos
+#Model score is BernoulliNB: 0.7267
+#Model score is kNeighborsClassifier: 0.63975
+
+Con binomios, 200 palabras, SIN stop_word=english y con 3 emoticonos
+#Model score is BernoulliNB: 0.7317
+#Model score is kNeighborsClassifier: 0.5894
+
+Con binomios, 200 palabras, stop_word=english y sin emoticonos (estos 3 emoticonos no parece que ayuden ni empeoren, a lo mejor es que no salen mucho)
+#Model score is BernoulliNB: 0.7269
+#Model score is kNeighborsClassifier: 0.6365
+
+Con binomios, 400 palabras, stop_word=english y sin emoticonos
+#Model score is BernoulliNB: 0.7472
+#Model score is kNeighborsClassifier: 0.5588 (a este sí que le ayudan los emoticonos)
+
+Con binomios, 400 palabras, SIN stop_word=english y con 3 emoticonos
+#Model score is BernoulliNB: 0.7317
+#Model score is kNeighborsClassifier: 0.5894
+
+Con binomios, 4000 palabras, SIN stop_word=english y con 3 emoticonos
+BEST---#Model score is BernoulliNB: 0.7767
+#Model score is kNeighborsClassifier: 0.4940
+
+Con binomios, 4000 palabras, CON stop_word=english y con 3 emoticonos
+#Model score is BernoulliNB: 0.7555 (A este no le ayudan las stop words?)
+#Model score is kNeighborsClassifier: 0.5070 (parece que stop words puede ayudarle)
+
+SIN binomios, 4000 palabras, CON stop_word=english y con 3 emoticonos
+#Model score is BernoulliNB: 0.7519 (A este no le ayudan las stop words)
+#Model score is kNeighborsClassifier: 0.5168 (los binomios como los estamos entrando no ayudan)
+
+SIN binomios, 400 palabras, CON stop_word=english y con 3 emoticonos
+#Model score is BernoulliNB: 0.7355 (A este no le ayudan las stop words)
+#Model score is kNeighborsClassifier: 0.6036 (los binomios como los estamos entrando no ayudan, pero tampoco empeoran mucho)
+
+
+Con binomios, 1000 palabras, SIN stop_word=english y con 3 emoticonos
+#Model score is BernoulliNB: 0.7637
+#Model score is kNeighborsClassifier: 0.5249
+
+Con binomios, 10000 palabras, SIN stop_word=english y con 3 emoticonos
+#Model score is BernoulliNB: 0.7249
+#Model score is kNeighborsClassifier: 0.49225
+
+Con binomios, 40000 palabras, SIN stop_word=english y con 3 emoticonos
+#Model score is BernoulliNB: 0.633
+#Model score is kNeighborsClassifier: 0.4666
+
+Con binomios, 100 palabras, stop_word=english y sin emoticonos (estos 3 emoticonos no parece que ayuden ni empeoren, a lo mejor es que no salen mucho)
+#Model score is BernoulliNB: 0.6981
+#Model score is kNeighborsClassifier: 0.650 (este se comporta mejor con menos terminos)
+
+Con binomios, 100 palabras, stop_word=english y con 3 emoticonos [llorar, >< y mano ok]
+#Model score is BernoulliNB: 0.6983
+#Model score is kNeighborsClassifier: 0.655 (es posible que los emoticonos hagan que vaya algo mejor, no esta claro que los emoticonos se tengan que incluir en Bag of Words)
+
+Con binomios, 100 palabras, stop_word=english y 2 emoticonos [llorar y mano ok]
+#Model score is BernoulliNB: 0.7094
+#Model score is kNeighborsClassifier: 0.6522 (este se comporta mejor con menos terminos)
+
+SIN binomios, 100 palabras, CON stop_word=english y con 3 emoticonos
+#Model score is BernoulliNB: 0.7031 (A este no le ayudan las stop words)
+BEST--#Model score is kNeighborsClassifier: 0.6576 (los binomios como los estamos entrando no ayudan)
+
+
+Con binomios, 75palabras, stop_word=english y con 3 emoticonos [llorar, >< y mano ok]
+#Model score is BernoulliNB: 0.6976
+#Model score is kNeighborsClassifier: 0.650 (es posible que los emoticonos hagan que vaya algo mejor)
+
+
+Con binomios, 50 palabras, stop_word=english y sin emoticonos (estos 3 emoticonos no parece que ayuden ni empeoren, a lo mejor es que no salen mucho)
+#Model score is BernoulliNB: 0.6831
+#Model score is kNeighborsClassifier: 0.6482 (este se comporta mejor con menos terminos)

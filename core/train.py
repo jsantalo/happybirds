@@ -1,42 +1,10 @@
 import pandas as pd
+import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
-
-
-def obtain_data_representation(df, test=None):
-    # If there is no test data, split the input
-    if test is None:
-        # Divide data in train and test
-        train, test = train_test_split(df, test_size=0.25)
-        df.airline_sentiment = pd.Categorical(df.airline_sentiment)
-    else:
-        # Otherwise, all is train
-        train = df
-
-    # Create a Bag of Words (BoW), by using train data only
-    cv = CountVectorizer(max_features=200)
-    x_train = cv.fit_transform(train['text'])
-    y_train = train['airline_sentiment'].values
-
-    # Obtain BoW for the test data, using the previously fitted one
-    x_test = cv.transform(test['text'])
-    try:
-        y_test = test['airline_sentiment'].values
-    except:
-        # It might be the submision file, where we don't have target values
-        y_test = None
-
-    return {
-        'train': {
-            'x': x_train,
-            'y': y_train
-        },
-        'test': {
-            'x': x_test,
-            'y': y_test
-        }
-    }
+import core.transform as trans
+from sklearn.naive_bayes import BernoulliNB
+from sklearn.neighbors import KNeighborsClassifier
 
 
 def train_model(dataset, dmodel, *model_args, **model_kwargs):
@@ -55,4 +23,31 @@ def train_model(dataset, dmodel, *model_args, **model_kwargs):
         print("Model score is: {}".format(score))
 
     # Done
-    return model, y_pred
+    return model, y_pred,score
+
+
+
+def train_score(df):
+    # cada vez que lo ejecutas da un resultado diferente, ojo, hay que hacer la crossvalidation? k-flod
+    scoreNB_mean = 0
+    scoreKN_mean = 0
+    boW_size = 4000
+    vocabular_bi = None
+
+    for i in range(10):
+        # df_emoji=add_emoji_column_to_df(df)
+        # print(df_emoji['emoji'])
+        dataset, vocabular_bi = trans.obtain_data_representation(df, boW_size)
+
+        # Train a Bernoulli Naive Bayes
+        modelNB, _, scoreNB = train_model(dataset, BernoulliNB)
+
+        # Train a K Nearest Neighbors Classifier
+        modelKN, _, scoreKN = train_model(dataset, KNeighborsClassifier)
+        scoreNB_mean = scoreNB_mean + scoreNB
+        scoreKN_mean = scoreKN_mean + scoreKN
+
+    print(scoreNB_mean / 10)
+    print(scoreKN_mean / 10)
+
+    print((vocabular_bi))
