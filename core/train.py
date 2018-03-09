@@ -1,53 +1,51 @@
-import pandas as pd
-import numpy as np
+from nltk import word_tokenize
+from nltk.stem import WordNetLemmatizer
 from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.metrics import accuracy_score
-import core.transform as trans
-from sklearn.naive_bayes import BernoulliNB
-from sklearn.neighbors import KNeighborsClassifier
-
-
-def train_model(dataset, dmodel, *model_args, **model_kwargs):
-
-    model = dmodel(*model_args, **model_kwargs)
-
-    # Train it
-    model.fit(dataset['train']['x'], dataset['train']['y'])
-
-    # Predict new values for test
-    y_pred = model.predict(dataset['test']['x'])
-
-    # Print accuracy score unless its the submission dataset
-    if dataset['test']['y'] is not None:
-        score = accuracy_score(dataset['test']['y'], y_pred)
-        print("Model score is: {}".format(score))
-
-    # Done
-    return model, y_pred,score
 
 
 
-def train_score(df):
-    # cada vez que lo ejecutas da un resultado diferente, ojo, hay que hacer la crossvalidation? k-flod
-    scoreNB_mean = 0
-    scoreKN_mean = 0
-    boW_size = 4000
-    vocabular_bi = None
 
-    for i in range(10):
-        # df_emoji=add_emoji_column_to_df(df)
-        # print(df_emoji['emoji'])
-        dataset, vocabular_bi = trans.obtain_data_representation(df, boW_size)
 
-        # Train a Bernoulli Naive Bayes
-        modelNB, _, scoreNB = train_model(dataset, BernoulliNB)
+class LemmaTokenizer(object):
+    def __init__(self):
+        self.wnl = WordNetLemmatizer()
 
-        # Train a K Nearest Neighbors Classifier
-        modelKN, _, scoreKN = train_model(dataset, KNeighborsClassifier)
-        scoreNB_mean = scoreNB_mean + scoreNB
-        scoreKN_mean = scoreKN_mean + scoreKN
+    def __call__(self, doc):
+        return [self.wnl.lemmatize(t) for t in word_tokenize(doc)]
 
-    print(scoreNB_mean / 10)
-    print(scoreKN_mean / 10)
 
-    print((vocabular_bi))
+class Train:
+
+    def __init__(self):
+        self.count_vectorizer = None
+        self.model = None
+
+    def get_vocabulary(self):
+        return self.count_vectorizer.vocabulary_
+
+    def fit_bigram(self, data, bow_size, lemma_extraction=False):
+
+        if(lemma_extraction):
+            tokenizer = LemmaTokenizer()
+        else:
+            tokenizer = None
+
+        self.count_vectorizer = CountVectorizer(ngram_range=(1, 2),
+                                                lowercase=True,
+                                                token_pattern=r'\b[A-Za-z]+\b',
+                                                stop_words='english',
+                                                min_df=1,
+                                                max_features=bow_size,
+                                                tokenizer=tokenizer)
+        self.count_vectorizer.fit(data)
+
+        return self.count_vectorizer
+
+    def set_model(self, dmodel, *model_args, **model_kwargs):
+        self.model = dmodel(*model_args, **model_kwargs)
+
+    def fit(self, x_train, y_train):
+        self.model.fit(x_train, y_train)
+
+    def predict(self, x_test):
+        return self.model.predict(x_test)

@@ -20,7 +20,7 @@ def obtain_data_representation(df, boW_size=200, test=None):
         train = df
 
     # Create a Bag of Words (BoW), by using train data only
-    vocabular_bi = get_bigram(df.text, boW_size)
+    vocabular_bi = get_bigram(train.text, boW_size)
     vocabular_bi.update({'😭': boW_size, '😆': boW_size + 1, '👍': boW_size + 2})
 
     cv = CountVectorizer(vocabulary=vocabular_bi)
@@ -81,14 +81,25 @@ def tokenizer_extraction(df):
 
 def get_unigram(data):
     count_model = CountVectorizer(ngram_range=(1, 1))
-    X = count_model.fit_transform(data)
-    count_model.vocabulary_
-    return X
+    count_model.fit(data)
+    return count_model.vocabulary_
 
 
-def get_bigram(data,boW_size):
-    bigram_vectorizer = CountVectorizer(ngram_range=(1, 2), token_pattern=r'\b\w+\b',stop_words='english', min_df=1,
-                                        max_features=boW_size,tokenizer=LemmaTokenizer())
+def get_bigram(data, boW_size, lemma_extraction=False):
+
+    if(lemma_extraction):
+        tokenizer = LemmaTokenizer()
+    else:
+        tokenizer = None
+
+    bigram_vectorizer = CountVectorizer(ngram_range=(1, 2),
+                                        lowercase=True,
+                                        token_pattern=r'\b\w+\b',
+                                        stop_words='english',
+                                        min_df=1,
+                                        max_features=boW_size,
+                                        tokenizer=tokenizer)
+    bigram_vectorizer.fit(data)
     return bigram_vectorizer.vocabulary_
 
 
@@ -108,7 +119,7 @@ def extract_emojis(a_list):
     aux=[' '.join(r.findall(s)) for s in a_list]
     return(aux)
 
-def add_emoji_column_to_df(df):   
+def add_emoji_column_to_df(df):
     df['emoji']=df['text'].apply(lambda x: extract_emojis([x]))
     return(df)
 
