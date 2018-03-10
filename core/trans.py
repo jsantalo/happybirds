@@ -62,6 +62,7 @@ def create_hot_encoding_dataframe(dfr, df):
 
 
 
+
 class Trans:
 
     def __init__(self):
@@ -85,6 +86,13 @@ class Trans:
 
         #hot encoding of 'negativereason' and add columns to 'dfr'
         #dfr = create_hot_encoding_dataframe(dfr, df)
+
+        #create columns with month, day, hour. I think DatetimeIndex method converts in local time using timezone
+
+        dfr['Month'] = pd.DatetimeIndex(df['tweet_created']).month
+        dfr['Day'] = pd.DatetimeIndex(df['tweet_created']).day
+        dfr['Hour'] = pd.DatetimeIndex(df['tweet_created']).hour
+        # dfr['Year'] = pd.DatetimeIndex(df['tweet_created']).year
 
         return dfr
 
