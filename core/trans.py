@@ -51,6 +51,15 @@ def count_text_length(text):
 def count_text_length_dataframe(df, col_txt='text'):
     return df[col_txt].apply(count_text_length)
 
+def create_hot_encoding(df, col):
+    df_hot_encoding = pd.get_dummies(df[col])
+    return df_hot_encoding
+
+def create_hot_encoding_dataframe(dfr, df):
+    df_hot_encoding = create_hot_encoding(df, 'negativereason')
+    dfr = pd.concat([dfr, df_hot_encoding], axis=1)
+    return dfr
+
 
 
 class Trans:
@@ -73,6 +82,9 @@ class Trans:
         dfr['has_emoji'] = tweet_has_emoji(df)
 
         dfr['text_length'] = count_text_length_dataframe(df)
+
+        #hot encoding of 'negativereason' and add columns to 'dfr'
+        #dfr = create_hot_encoding_dataframe(dfr, df)
 
         return dfr
 
