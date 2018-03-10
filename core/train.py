@@ -25,7 +25,7 @@ class Train:
 
     def fit_bigram(self, data, bow_size, lemma_extraction=False):
 
-        if(lemma_extraction):
+        if lemma_extraction:
             tokenizer = LemmaTokenizer()
         else:
             tokenizer = None

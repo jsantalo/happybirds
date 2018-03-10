@@ -44,6 +44,14 @@ def extract_emojis(a_list):
 def add_emoji_column_to_df(df, col_txt='text'):
     return df[col_txt].apply(lambda x: extract_emojis([x]))
 
+def count_text_length(text):
+    return len(text)
+
+
+def count_text_length_dataframe(df, col_txt='text'):
+    return df[col_txt].apply(count_text_length)
+
+
 
 class Trans:
 
@@ -63,6 +71,8 @@ class Trans:
         dfr['upper_ratio'] = uppercase_ratio_extract_dataframe(df)
 
         dfr['has_emoji'] = tweet_has_emoji(df)
+
+        dfr['text_length'] = count_text_length_dataframe(df)
 
         return dfr
 
