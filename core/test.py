@@ -31,6 +31,7 @@ class Test:
     def load_from_csv(self, filename, index_col='tweet_id'):
         self.df = pd.read_csv(filename, index_col=index_col)
 
+
     def train_validate_test(self, filename=None, verbose=False):
 
         if filename is not None:

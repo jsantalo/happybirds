@@ -88,11 +88,10 @@ class Trans:
         #dfr = create_hot_encoding_dataframe(dfr, df)
 
         #create columns with month, day, hour. I think DatetimeIndex method converts in local time using timezone
-
-        dfr['Month'] = pd.DatetimeIndex(df['tweet_created']).month
+        #dfr['Month'] = pd.DatetimeIndex(df['tweet_created']).month
         dfr['Day'] = pd.DatetimeIndex(df['tweet_created']).day
         dfr['Hour'] = pd.DatetimeIndex(df['tweet_created']).hour
-        # dfr['Year'] = pd.DatetimeIndex(df['tweet_created']).year
+        dfr['dayofweek'] = pd.DatetimeIndex(df['tweet_created']).dayofweek
 
         return dfr
 
