@@ -44,7 +44,7 @@ def extract_emojis(a_list):
 def add_emoji_column_to_df(df, col_txt='text'):
     return df[col_txt].apply(lambda x: extract_emojis([x]))
 
-def add_emoji_len_column_to_df2(df_e):
+def add_emoji_len_column_to_df(df_e):
     # add a column in the df with all emojis if any, mas rapido porque checkea si hay o no antes de asignar
     #df_e['emoji']=""
     for i in df_e.index:
