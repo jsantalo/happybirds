@@ -37,3 +37,7 @@ Models
 Visualization
 	distribution 
 
+How to handle the unevenly distributed dataset? See percents:  
+negative    0.629668  
+neutral     0.210155  
+positive    0.160178  
