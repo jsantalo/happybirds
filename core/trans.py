@@ -44,6 +44,16 @@ def extract_emojis(a_list):
 def add_emoji_column_to_df(df, col_txt='text'):
     return df[col_txt].apply(lambda x: extract_emojis([x]))
 
+def add_emoji_len_column_to_df2(df_e):
+    # add a column in the df with all emojis if any, mas rapido porque checkea si hay o no antes de asignar
+    #df_e['emoji']=""
+    for i in df_e.index:
+        if(text_has_emoji(df_e.text[i])):
+            [df_e.loc[i,'emoji'],df_e.loc[i,'num_emoji']]=(extract_emojis([df_e.text[i]]))
+        else:
+            df_e.loc[i,'num_emoji']=0
+    return(df_e['num_emoji']) # es un poco más rapido
+
 def count_text_length(text):
     return len(text)
 
@@ -59,6 +69,7 @@ def create_hot_encoding_dataframe(dfr, df):
     df_hot_encoding = create_hot_encoding(df, 'negativereason')
     dfr = pd.concat([dfr, df_hot_encoding], axis=1)
     return dfr
+
 
 
 
