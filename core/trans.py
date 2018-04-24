@@ -97,6 +97,7 @@ class Trans:
 
         #print(extract_emojis(df))
         dfr['text_length'] = count_text_length_dataframe(df)
+        dfr['len_emoji']=add_emoji_len_column_to_df(df)
 
         #hot encoding of 'negativereason' and add columns to 'dfr'
         #dfr = create_hot_encoding_dataframe(dfr, df)
@@ -107,6 +108,9 @@ class Trans:
         dfr['Hour'] = pd.DatetimeIndex(df['tweet_created']).hour
         dfr['dayofweek'] = pd.DatetimeIndex(df['tweet_created']).dayofweek
         #print(dfr.head())
+
+        # dfr['Year'] = pd.DatetimeIndex(df['tweet_created']).year
+
         return dfr
 
 
