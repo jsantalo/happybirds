@@ -26,6 +26,8 @@ def char_is_emoji(character):
 def text_has_emoji(text):
     for character in text:
         if character in emoji.UNICODE_EMOJI:
+            print(character)
+            print(emoji.demojize(character))
             return 1
     return 0
 
@@ -82,6 +84,7 @@ class Trans:
 
         dfr['has_emoji'] = tweet_has_emoji(df)
 
+        #print(extract_emojis(df))
         dfr['text_length'] = count_text_length_dataframe(df)
 
         #hot encoding of 'negativereason' and add columns to 'dfr'
@@ -92,7 +95,7 @@ class Trans:
         dfr['Day'] = pd.DatetimeIndex(df['tweet_created']).day
         dfr['Hour'] = pd.DatetimeIndex(df['tweet_created']).hour
         dfr['dayofweek'] = pd.DatetimeIndex(df['tweet_created']).dayofweek
-
+        #print(dfr.head())
         return dfr
 
 

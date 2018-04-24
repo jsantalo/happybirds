@@ -1,7 +1,7 @@
 from nltk import word_tokenize
 from nltk.stem import WordNetLemmatizer
 from sklearn.feature_extraction.text import CountVectorizer
-
+import nltk
 
 
 
@@ -27,6 +27,9 @@ class Train:
 
         if lemma_extraction:
             tokenizer = LemmaTokenizer()
+            #tokenizer = nltk.PorterStemmer()
+            #tokenizer = nltk.LancasterStemmer()
+
         else:
             tokenizer = None
 
@@ -37,6 +40,7 @@ class Train:
                                                 min_df=1,
                                                 max_features=bow_size,
                                                 tokenizer=tokenizer)
+
         self.count_vectorizer.fit(data)
 
         return self.count_vectorizer

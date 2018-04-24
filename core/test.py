@@ -3,7 +3,6 @@ from sklearn.naive_bayes import BernoulliNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn import svm
-
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 
@@ -74,6 +73,7 @@ class Test:
         self.transpk = None
         self.trainpk = None
 
+
     def train_validate_test(self, filename=None, verbose=False, kaggle_filename=None):
 
         if kaggle_filename is None:
@@ -111,11 +111,13 @@ class Test:
 
             trainpk.fit_bigram(data=ctrain.text, bow_size=1000)
 
+            print(trainpk.count_vectorizer.vocabulary_)
             x_train = transpk.transform(count_vectorizer=trainpk.count_vectorizer, df=ctrain)
             y_train = ctrain['airline_sentiment'].values
 
             trainpk.model = RandomForestClassifier(n_estimators=1000, n_jobs=-1)
-            #trainpk.model = svm.SVC(kernel = 'rbf', gamma=(0.011,5.,0.01), C = (0.01,2))
+
+            #trainpk.model = svm.SVC(kernel='rbf')
 
             trainpk.fit(x_train, y_train)
 
