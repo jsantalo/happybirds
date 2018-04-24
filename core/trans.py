@@ -4,7 +4,7 @@ from nltk.tokenize import TweetTokenizer
 from sklearn.feature_extraction.text import CountVectorizer
 import emoji
 import re
-
+from operator import itemgetter
 
 def uppercase_ratio_extract(text):
     upper = 0
@@ -23,17 +23,17 @@ def char_is_emoji(character):
     return character in emoji.UNICODE_EMOJI
 
 
+
+
 def text_has_emoji(text):
     for character in text:
         if character in emoji.UNICODE_EMOJI:
-            print(character)
-            print(emoji.demojize(character))
             return 1
     return 0
 
-
 def tweet_has_emoji(df, col_txt='text'):
     return df[col_txt].apply(text_has_emoji)
+
 
 
 def extract_emojis(a_list):
@@ -45,6 +45,7 @@ def extract_emojis(a_list):
 
 def add_emoji_column_to_df(df, col_txt='text'):
     return df[col_txt].apply(lambda x: extract_emojis([x]))
+
 
 def add_emoji_len_column_to_df(df_e):
     # add a column in the df with all emojis if any, mas rapido porque checkea si hay o no antes de asignar
@@ -95,9 +96,11 @@ class Trans:
 
         dfr['has_emoji'] = tweet_has_emoji(df)
 
-        #print(extract_emojis(df))
+
+
+
         dfr['text_length'] = count_text_length_dataframe(df)
-        dfr['len_emoji']=add_emoji_len_column_to_df(df)
+        #dfr['len_emoji']=add_emoji_len_column_to_df(df)
 
         #hot encoding of 'negativereason' and add columns to 'dfr'
         #dfr = create_hot_encoding_dataframe(dfr, df)
@@ -107,10 +110,38 @@ class Trans:
         dfr['Day'] = pd.DatetimeIndex(df['tweet_created']).day
         dfr['Hour'] = pd.DatetimeIndex(df['tweet_created']).hour
         dfr['dayofweek'] = pd.DatetimeIndex(df['tweet_created']).dayofweek
-        #print(dfr.head())
+        #print(dfr.describe())
 
-        # dfr['Year'] = pd.DatetimeIndex(df['tweet_created']).year
+        # create an ordered dictionary with number of emoji appearences for all the tweet
+        self.appearences_emoji_total(df)
 
         return dfr
 
 
+    # analyze which emojis appear more frequently.
+    # Once we know the more frequents, classify as positive or negative taking into account the correlation with other P/N tweets
+    def appearences_emoji_total(self, df, col_txt='text'):
+        self.emoji_dict = {}  # new dictionary with key=emoji_name, value=num_apperarences
+
+        df[col_txt].apply(self.text_dict_emoji)
+        print("dictionary emoji")
+        print(self.emoji_dict)
+        sorted_dict = sorted(self.emoji_dict.items(), key=itemgetter(1), reverse=True)  # ordenem el dict
+        print("dictionary ordenat")
+        print(sorted_dict)
+        for k, v in sorted_dict:
+            print(emoji.emojize(k + ":" + str(v)))
+
+
+    #fill the dictionary with the emojis and appearences
+    def text_dict_emoji(self, text):
+        for character in text:
+            if character in emoji.UNICODE_EMOJI:
+                # print(character)
+                emoji_name = emoji.demojize(character)
+                # print(emoji_name)
+                if emoji_name in self.emoji_dict:
+                    num = self.emoji_dict[emoji_name]
+                    self.emoji_dict[emoji_name] = num + 1
+                else:
+                    self.emoji_dict[emoji_name] = 1
