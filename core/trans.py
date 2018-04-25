@@ -110,7 +110,7 @@ class Trans:
 
         # hot encoding of 'airline' and add columns to 'dfr'
         # not better results so far, comment if needed
-        dfr = create_hot_encoding_dataframe_airline(dfr, df)
+        # dfr = create_hot_encoding_dataframe_airline(dfr, df)
 
         #create columns with month, day, hour. I think DatetimeIndex method converts in local time using timezone
         #dfr['Month'] = pd.DatetimeIndex(df['tweet_created']).month
