@@ -4,7 +4,7 @@ from nltk.tokenize import TweetTokenizer
 from sklearn.feature_extraction.text import CountVectorizer
 import emoji
 import re
-
+from operator import itemgetter
 
 def uppercase_ratio_extract(text):
     upper = 0
@@ -40,19 +40,21 @@ def extract_emojis(a_list):
     aux = [' '.join(r.findall(s)) for s in a_list]
     return (aux)
 
+def extract_len_emojis(a_list):
+    #num_emojis=0
+    emojis_list = map(lambda x: ''.join(x.split()), emoji.UNICODE_EMOJI.keys())
+    r = re.compile('|'.join(re.escape(p) for p in emojis_list))
+    for s in a_list:
+        num_emojis=len(r.findall(s))
+    return num_emojis
+
 
 def add_emoji_column_to_df(df, col_txt='text'):
     return df[col_txt].apply(lambda x: extract_emojis([x]))
 
-def add_emoji_len_column_to_df(df_e):
-    # add a column in the df with all emojis if any, mas rapido porque checkea si hay o no antes de asignar
-    #df_e['emoji']=""
-    for i in df_e.index:
-        if(text_has_emoji(df_e.text[i])):
-            [df_e.loc[i,'emoji'],df_e.loc[i,'num_emoji']]=(extract_emojis([df_e.text[i]]))
-        else:
-            df_e.loc[i,'num_emoji']=0
-    return(df_e['num_emoji']) # es un poco más rapido
+def add_emoji_len_column_to_df(df, col_txt='text'):
+    return df[col_txt].apply(lambda x: extract_len_emojis([x]))
+
 
 def count_text_length(text):
     return len(text)
@@ -70,7 +72,10 @@ def create_hot_encoding_dataframe(dfr, df):
     dfr = pd.concat([dfr, df_hot_encoding], axis=1)
     return dfr
 
-
+def create_hot_encoding_dataframe_airline(dfr, df):
+    df_hot_encoding = create_hot_encoding(df, 'airline')
+    dfr = pd.concat([dfr, df_hot_encoding], axis=1)
+    return dfr
 
 
 
@@ -94,21 +99,53 @@ class Trans:
         dfr['has_emoji'] = tweet_has_emoji(df)
 
         dfr['text_length'] = count_text_length_dataframe(df)
+        #number of emojis in text can replace tweet_has_emoji --> comment on Wednesday
         dfr['len_emoji']=add_emoji_len_column_to_df(df)
 
         #hot encoding of 'negativereason' and add columns to 'dfr'
         #dfr = create_hot_encoding_dataframe(dfr, df)
 
-        #create columns with month, day, hour. I think DatetimeIndex method converts in local time using timezone
+        # hot encoding of 'airline' and add columns to 'dfr'
+        # not better results so far, comment if needed
+        dfr = create_hot_encoding_dataframe_airline(dfr, df)
 
-        dfr['Month'] = pd.DatetimeIndex(df['tweet_created']).month
+        #create columns with month, day, hour. I think DatetimeIndex method converts in local time using timezone
+        #dfr['Month'] = pd.DatetimeIndex(df['tweet_created']).month
         dfr['Day'] = pd.DatetimeIndex(df['tweet_created']).day
         dfr['Hour'] = pd.DatetimeIndex(df['tweet_created']).hour
-        
-        # dfr['Year'] = pd.DatetimeIndex(df['tweet_created']).year
-        
-        ## random comment to test git
+        dfr['dayofweek'] = pd.DatetimeIndex(df['tweet_created']).dayofweek
+        #print(dfr.describe())
+
+        # create an ordered dictionary with number of emoji appearences for all the tweet
+        self.appearences_emoji_total(df)
 
         return dfr
 
 
+    # analyze which emojis appear more frequently.
+    # Once we know the more frequents, classify as positive or negative taking into account the correlation with other P/N tweets
+    def appearences_emoji_total(self, df, col_txt='text'):
+        self.emoji_dict = {}  # new dictionary with key=emoji_name, value=num_apperarences
+
+        df[col_txt].apply(self.text_dict_emoji)
+        print("dictionary emoji")
+        print(self.emoji_dict)
+        sorted_dict = sorted(self.emoji_dict.items(), key=itemgetter(1), reverse=True)  # ordenem el dict
+        print("dictionary ordenat")
+        print(sorted_dict)
+        for k, v in sorted_dict:
+            print(emoji.emojize(k + ":" + str(v)))
+
+
+    #fill the dictionary with the emojis and appearences
+    def text_dict_emoji(self, text):
+        for character in text:
+            if character in emoji.UNICODE_EMOJI:
+                # print(character)
+                emoji_name = emoji.demojize(character)
+                # print(emoji_name)
+                if emoji_name in self.emoji_dict:
+                    num = self.emoji_dict[emoji_name]
+                    self.emoji_dict[emoji_name] = num + 1
+                else:
+                    self.emoji_dict[emoji_name] = 1
