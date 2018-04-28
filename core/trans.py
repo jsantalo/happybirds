@@ -1,10 +1,14 @@
 import pandas as pd
 from nltk.corpus import stopwords
+stop = set(stopwords.words('english')) # when working on the Spanish, change to "spanish"
 from nltk.tokenize import TweetTokenizer
+porter = nltk.PorterStemmer()
+lancaster = nltk.LancasterStemmer()
 from sklearn.feature_extraction.text import CountVectorizer
 import emoji
 import re
 from operator import itemgetter
+
 
 def uppercase_ratio_extract(text):
     upper = 0
@@ -77,7 +81,24 @@ def create_hot_encoding_dataframe_airline(dfr, df):
     dfr = pd.concat([dfr, df_hot_encoding], axis=1)
     return dfr
 
+def clean_text_lemmatize(df):
+    data["text_original"] = data["text"]
+    data["text"] = data["text"].apply(lambda x: x.lower())
+    data["text"] = data["text"].apply(lambda x: re.sub('((www\.[^\s]+)|(https?://[^\s]+))','URL',x)) # convert all links to "URL"
+    data["text"] = data["text"].apply(lambda x: re.sub('@[^\s]+','ATUSER',x)) # convert all users to "ATUSER"
+    data["text"] = data["text"].apply(lambda x: re.sub("[^a-zA-Z]+", " ", x)) # keep alphabetic only
+    data['tweet_without_stopwords'] = data['text'].apply(lambda x: ' '.join([word for word in x.split() if word not in (stop)]))
 
+    tt = TweetTokenizer()
+    data['list_of_words'] = data['tweet_without_stopwords'].apply(tt.tokenize) # tokenize text
+
+    data["words_list_porter"] = data["list_of_words"].apply(lambda x:[porter.stem(y) for y in x]) # stemmer porter
+    data["words_list_lancaster"] = data["list_of_words"].apply(lambda x:[lancaster.stem(y) for y in x]) # stemmer lancaster
+    data["words_lancaster"] = data['words_list_lancaster'].apply(lambda x: ' '.join(x)) #convert list to string for TfidfVectorizer  if used
+    data["words_porter"] = data['words_list_porter'].apply(lambda x: ' '.join(x))
+    del data["words_list_lancaster"]
+    del data["words_list_porter"]
+    return df
 
 class Trans:
 
