@@ -82,22 +82,22 @@ def create_hot_encoding_dataframe_airline(dfr, df):
     return dfr
 
 def clean_text_lemmatize(df):
-    data["text_original"] = data["text"]
-    data["text"] = data["text"].apply(lambda x: x.lower())
-    data["text"] = data["text"].apply(lambda x: re.sub('((www\.[^\s]+)|(https?://[^\s]+))','URL',x)) # convert all links to "URL"
-    data["text"] = data["text"].apply(lambda x: re.sub('@[^\s]+','ATUSER',x)) # convert all users to "ATUSER"
-    data["text"] = data["text"].apply(lambda x: re.sub("[^a-zA-Z]+", " ", x)) # keep alphabetic only
-    data['tweet_without_stopwords'] = data['text'].apply(lambda x: ' '.join([word for word in x.split() if word not in (stop)]))
+    df["text_original"] = df["text"]
+    df["text"] = df["text"].apply(lambda x: x.lower())
+    df["text"] = df["text"].apply(lambda x: re.sub('((www\.[^\s]+)|(https?://[^\s]+))','URL',x)) # convert all links to "URL"
+    df["text"] = df["text"].apply(lambda x: re.sub('@[^\s]+','ATUSER',x)) # convert all users to "ATUSER"
+    df["text"] = df["text"].apply(lambda x: re.sub("[^a-zA-Z]+", " ", x)) # keep alphabetic only
+    df['tweet_without_stopwords'] = df['text'].apply(lambda x: ' '.join([word for word in x.split() if word not in (stop)]))
 
     tt = TweetTokenizer()
-    data['list_of_words'] = data['tweet_without_stopwords'].apply(tt.tokenize) # tokenize text
+    df['list_of_words'] = df['tweet_without_stopwords'].apply(tt.tokenize) # tokenize text
 
-    data["words_list_porter"] = data["list_of_words"].apply(lambda x:[porter.stem(y) for y in x]) # stemmer porter
-    data["words_list_lancaster"] = data["list_of_words"].apply(lambda x:[lancaster.stem(y) for y in x]) # stemmer lancaster
-    data["words_lancaster"] = data['words_list_lancaster'].apply(lambda x: ' '.join(x)) #convert list to string for TfidfVectorizer  if used
-    data["words_porter"] = data['words_list_porter'].apply(lambda x: ' '.join(x))
-    del data["words_list_lancaster"]
-    del data["words_list_porter"]
+    df["words_list_porter"] = df["list_of_words"].apply(lambda x:[porter.stem(y) for y in x]) # stemmer porter
+    df["words_list_lancaster"] = df["list_of_words"].apply(lambda x:[lancaster.stem(y) for y in x]) # stemmer lancaster
+    df["words_lancaster"] = df['words_list_lancaster'].apply(lambda x: ' '.join(x)) #convert list to string for TfidfVectorizer  if used
+    df["words_porter"] = df['words_list_porter'].apply(lambda x: ' '.join(x))
+    del df["words_list_lancaster"]
+    del df["words_list_porter"]
     return df
 
 class Trans:
