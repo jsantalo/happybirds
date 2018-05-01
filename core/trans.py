@@ -1,14 +1,20 @@
 import pandas as pd
 from nltk.corpus import stopwords
-stop = set(stopwords.words('english')) # when working on the Spanish, change to "spanish"
+
 from nltk.tokenize import TweetTokenizer
-porter = nltk.PorterStemmer()
-lancaster = nltk.LancasterStemmer()
+
+from nltk import PorterStemmer
+from nltk import LancasterStemmer
+
 from sklearn.feature_extraction.text import CountVectorizer
 import emoji
 import re
 from operator import itemgetter
 
+stop = set(stopwords.words('english')) # when working on the Spanish, change to "spanish"
+
+porter = PorterStemmer()
+lancaster = LancasterStemmer()
 
 def uppercase_ratio_extract(text):
     upper = 0
