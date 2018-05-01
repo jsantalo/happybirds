@@ -3,7 +3,6 @@ from nltk.stem import WordNetLemmatizer
 from sklearn.feature_extraction.text import CountVectorizer
 from nltk.corpus import stopwords
 import core.test as testing
-import nltk
 import pandas as pd
 
 
@@ -25,7 +24,7 @@ class Train:
     def get_vocabulary(self):
         return self.count_vectorizer.vocabulary_
 
-    def fit_bigram(self, data, bow_size, lemma_extraction=False):
+    def fit_bigram(self, data, bow_size, lemma_extraction=False, language='english'):
 
         if lemma_extraction:
             tokenizer = LemmaTokenizer()
@@ -35,12 +34,13 @@ class Train:
         else:
             tokenizer = None
 
-        spanish_stopwords = stopwords.words('spanish')
+        #TODO In case we remove accents, adapt code
+        stopwords_list = stopwords.words(language)
 
         self.count_vectorizer = CountVectorizer(ngram_range=(1, 2),
                                                 lowercase=True,
                                                 token_pattern=r'\b[A-Za-z]+\b',
-                                                stop_words=spanish_stopwords,
+                                                stop_words=stopwords_list,
                                                 min_df=1,
                                                 max_features=bow_size,
                                                 tokenizer=tokenizer)

@@ -127,26 +127,41 @@ class Trans:
     def __init__(self):
         pass
 
-    # Return a new dataframe with the transformations done
-    def transform(self, df, count_vectorizer, col_txt='text'):
+    def pre_transform(self, df, col_text='text'):
 
-        # Extract de word count and setup the dataframe
-        x = count_vectorizer.transform(df[col_txt])
-        dfr = pd.DataFrame(x.toarray())
+        dfr = pd.DataFrame()
         dfr['tweet_id'] = df.index
         dfr = dfr.set_index('tweet_id')
 
+        dfr['count_url'] = count_url_dataframe(df, col_txt=col_text)
+
+        df[col_text] = remove_url_dataframe(df, col_txt=col_text)
+
+        return df, dfr
+
+
+    # Return a new dataframe with the transformations done
+    def transform(self, df, dfr, count_vectorizer, col_txt='text'):
+
+        if dfr is None:
+            dfr = pd.DataFrame()
+
+        # Extract de word count and setup the dataframe
+        x = count_vectorizer.transform(df[col_txt])
+        dftmp = pd.DataFrame(x.toarray())
+        dftmp['tweet_id'] = df.index
+        dftmp = dftmp.set_index('tweet_id')
+
+        dfr = pd.concat([dfr, dftmp], axis=1)
+
         # Column to count uppercase ratio
-        dfr['upper_ratio'] = uppercase_ratio_extract_dataframe(df)
+        dfr['upper_ratio'] = uppercase_ratio_extract_dataframe(df,col_txt=col_txt)
 
-        dfr['has_emoji'] = tweet_has_emoji(df)
+        dfr['has_emoji'] = tweet_has_emoji(df, col_txt=col_txt)
 
-
-
-
-        dfr['text_length'] = count_text_length_dataframe(df)
+        dfr['text_length'] = count_text_length_dataframe(df, col_txt=col_txt)
         #number of emojis in text can replace tweet_has_emoji --> comment on Wednesday
-        dfr['len_emoji']=add_emoji_len_column_to_df(df)
+        dfr['len_emoji']=add_emoji_len_column_to_df(df, col_txt=col_txt)
 
         #hot encoding of 'negativereason' and add columns to 'dfr'
         #dfr = create_hot_encoding_dataframe(dfr, df)
