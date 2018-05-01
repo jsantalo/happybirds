@@ -1,7 +1,7 @@
 from nltk import word_tokenize
 from nltk.stem import WordNetLemmatizer
 from sklearn.feature_extraction.text import CountVectorizer
-
+from nltk.corpus import stopwords
 
 
 
@@ -30,10 +30,12 @@ class Train:
         else:
             tokenizer = None
 
+        spanish_stopwords = stopwords.words('spanish')
+
         self.count_vectorizer = CountVectorizer(ngram_range=(1, 2),
                                                 lowercase=True,
                                                 token_pattern=r'\b[A-Za-z]+\b',
-                                                stop_words='english',
+                                                stop_words=spanish_stopwords,
                                                 min_df=1,
                                                 max_features=bow_size,
                                                 tokenizer=tokenizer)

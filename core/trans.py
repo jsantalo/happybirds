@@ -19,6 +19,22 @@ def uppercase_ratio_extract_dataframe(df, col_txt='text'):
     return df[col_txt].apply(uppercase_ratio_extract)
 
 
+def remove_url(text):
+    return re.sub(r"http\S+", "", text)
+
+
+def remove_url_dataframe(df, col_txt='text'):
+    return df[col_txt].apply(remove_url)
+
+
+def count_urls(text):
+    return len(re.findall(r"http\S+", text))
+
+
+def count_url_dataframe(df, col_txt='text'):
+    return df[col_txt].apply(count_urls)
+
+
 def char_is_emoji(character):
     return character in emoji.UNICODE_EMOJI
 
