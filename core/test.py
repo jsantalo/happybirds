@@ -3,12 +3,12 @@ from sklearn.naive_bayes import BernoulliNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn import svm
-
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 
-import core.train as training
-import core.trans as transform
+#import core.train as training
+#get some problems with this imports, do not know why..
+#import core.trans as transform
 import output.kaggle_submit as kaggle_submit
 
 def encode_sentiment(sentiment,sentiment_options):
@@ -20,7 +20,10 @@ def encode_sentiment(sentiment,sentiment_options):
         i=i+1
     return sentiment_encoded
 
-def correlation_to_sentiment(x_train,ctrain,trainpk,list_correlations =True,list_stats=False,number_features='all'):
+def correlation_to_sentiment(x_train,ctrain,voc,list_correlations =True,list_stats=False,number_features='all'):
+    # prints correlation between characteristics in x_train and airline sentiment in ctrain.
+    # voc is the vocabulary of the count_vectorizer. if needed input trainpk.get_vocabulary()
+    # returns the correlation matrix sorted
     sentiment_options=sorted(ctrain['airline_sentiment'].unique())
     print("found %d sentiments: %s"% (len(sentiment_options),sentiment_options))
     x_train['airline_sentiment']=ctrain['airline_sentiment']
@@ -29,7 +32,7 @@ def correlation_to_sentiment(x_train,ctrain,trainpk,list_correlations =True,list
     cor_dict = corrmat['sentiment_encoded'].to_dict()
     del cor_dict['sentiment_encoded']
     corr_mat_sorted=sorted(cor_dict.items(), key = lambda x: -abs(x[1]))
-    voc=trainpk.get_vocabulary()
+
     if number_features=='all':
         number_features=len(corr_mat_sorted)
     
@@ -48,6 +51,7 @@ def correlation_to_sentiment(x_train,ctrain,trainpk,list_correlations =True,list
                 print("the vocabular term for %d is: %s "% (ele[0], list(voc.keys())[list(voc.values()).index(ele[0])]))
             print(x_train[[ele[0],'airline_sentiment']].groupby('airline_sentiment').mean())
 
+    return corr_mat_sorted
 
 def score_model(y_test, y_pred, verbose=False):
     score = accuracy_score(y_test, y_pred)
@@ -73,6 +77,7 @@ class Test:
 
         self.transpk = None
         self.trainpk = None
+
 
     def train_validate_test(self, filename=None, verbose=False, kaggle_filename=None):
 
@@ -111,11 +116,13 @@ class Test:
 
             trainpk.fit_bigram(data=ctrain.text, bow_size=1000)
 
+            print(trainpk.count_vectorizer.vocabulary_)
             x_train = transpk.transform(count_vectorizer=trainpk.count_vectorizer, df=ctrain)
             y_train = ctrain['airline_sentiment'].values
 
             trainpk.model = RandomForestClassifier(n_estimators=1000, n_jobs=-1)
-            #trainpk.model = svm.SVC(kernel = 'rbf', gamma=(0.011,5.,0.01), C = (0.01,2))
+
+            #trainpk.model = svm.SVC(kernel='rbf')
 
             trainpk.fit(x_train, y_train)
 
