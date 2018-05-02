@@ -1,10 +1,20 @@
 import pandas as pd
 from nltk.corpus import stopwords
+
 from nltk.tokenize import TweetTokenizer
+
+from nltk import PorterStemmer
+from nltk import LancasterStemmer
+
 from sklearn.feature_extraction.text import CountVectorizer
 import emoji
 import re
 from operator import itemgetter
+
+stop = set(stopwords.words('english')) # when working on the Spanish, change to "spanish"
+
+porter = PorterStemmer()
+lancaster = LancasterStemmer()
 
 def uppercase_ratio_extract(text):
     upper = 0
@@ -19,10 +29,24 @@ def uppercase_ratio_extract_dataframe(df, col_txt='text'):
     return df[col_txt].apply(uppercase_ratio_extract)
 
 
+def remove_url(text):
+    return re.sub(r"http\S+", "", text)
+
+
+def remove_url_dataframe(df, col_txt='text'):
+    return df[col_txt].apply(remove_url)
+
+
+def count_urls(text):
+    return len(re.findall(r"http\S+", text))
+
+
+def count_url_dataframe(df, col_txt='text'):
+    return df[col_txt].apply(count_urls)
+
+
 def char_is_emoji(character):
     return character in emoji.UNICODE_EMOJI
-
-
 
 
 def text_has_emoji(text):
@@ -31,9 +55,9 @@ def text_has_emoji(text):
             return 1
     return 0
 
+
 def tweet_has_emoji(df, col_txt='text'):
     return df[col_txt].apply(text_has_emoji)
-
 
 
 def extract_emojis(a_list):
@@ -42,20 +66,21 @@ def extract_emojis(a_list):
     aux = [' '.join(r.findall(s)) for s in a_list]
     return (aux)
 
+def extract_len_emojis(a_list):
+    #num_emojis=0
+    emojis_list = map(lambda x: ''.join(x.split()), emoji.UNICODE_EMOJI.keys())
+    r = re.compile('|'.join(re.escape(p) for p in emojis_list))
+    for s in a_list:
+        num_emojis=len(r.findall(s))
+    return num_emojis
+
 
 def add_emoji_column_to_df(df, col_txt='text'):
     return df[col_txt].apply(lambda x: extract_emojis([x]))
 
+def add_emoji_len_column_to_df(df, col_txt='text'):
+    return df[col_txt].apply(lambda x: extract_len_emojis([x]))
 
-def add_emoji_len_column_to_df(df_e):
-    # add a column in the df with all emojis if any, mas rapido porque checkea si hay o no antes de asignar
-    #df_e['emoji']=""
-    for i in df_e.index:
-        if(text_has_emoji(df_e.text[i])):
-            [df_e.loc[i,'emoji'],df_e.loc[i,'num_emoji']]=(extract_emojis([df_e.text[i]]))
-        else:
-            df_e.loc[i,'num_emoji']=0
-    return(df_e['num_emoji']) # es un poco más rapido
 
 def count_text_length(text):
     return len(text)
@@ -73,34 +98,77 @@ def create_hot_encoding_dataframe(dfr, df):
     dfr = pd.concat([dfr, df_hot_encoding], axis=1)
     return dfr
 
+def create_hot_encoding_dataframe_airline(dfr, df):
+    df_hot_encoding = create_hot_encoding(df, 'airline')
+    dfr = pd.concat([dfr, df_hot_encoding], axis=1)
+    return dfr
 
+def clean_text_lemmatize(df):
+    df["text_original"] = df["text"]
+    df["text"] = df["text"].apply(lambda x: x.lower())
+    df["text"] = df["text"].apply(lambda x: re.sub('((www\.[^\s]+)|(https?://[^\s]+))','URL',x)) # convert all links to "URL"
+    df["text"] = df["text"].apply(lambda x: re.sub('@[^\s]+','ATUSER',x)) # convert all users to "ATUSER"
+    df["text"] = df["text"].apply(lambda x: re.sub("[^a-zA-Z]+", " ", x)) # keep alphabetic only
+    df['tweet_without_stopwords'] = df['text'].apply(lambda x: ' '.join([word for word in x.split() if word not in (stop)]))
 
+    tt = TweetTokenizer()
+    df['list_of_words'] = df['tweet_without_stopwords'].apply(tt.tokenize) # tokenize text
 
+    df["words_list_porter"] = df["list_of_words"].apply(lambda x:[porter.stem(y) for y in x]) # stemmer porter
+    df["words_list_lancaster"] = df["list_of_words"].apply(lambda x:[lancaster.stem(y) for y in x]) # stemmer lancaster
+    df["words_lancaster"] = df['words_list_lancaster'].apply(lambda x: ' '.join(x)) #convert list to string for TfidfVectorizer  if used
+    df["words_porter"] = df['words_list_porter'].apply(lambda x: ' '.join(x))
+    del df["words_list_lancaster"]
+    del df["words_list_porter"]
+    return df
 
 class Trans:
 
     def __init__(self):
         pass
 
-    # Return a new dataframe with the transformations done
-    def transform(self, df, count_vectorizer, col_txt='text'):
+    def pre_transform(self, df, col_text='text'):
 
-        # Extract de word count and setup the dataframe
-        x = count_vectorizer.transform(df[col_txt])
-        dfr = pd.DataFrame(x.toarray())
+        dfr = pd.DataFrame()
         dfr['tweet_id'] = df.index
         dfr = dfr.set_index('tweet_id')
 
+        dfr['count_url'] = count_url_dataframe(df, col_txt=col_text)
+
+        df[col_text] = remove_url_dataframe(df, col_txt=col_text)
+
+        return df, dfr
+
+
+    # Return a new dataframe with the transformations done
+    def transform(self, df, count_vectorizer,  dfr=None, col_txt='text'):
+
+        if dfr is None:
+            dfr = pd.DataFrame()
+
+        # Extract de word count and setup the dataframe
+        x = count_vectorizer.transform(df[col_txt])
+        dftmp = pd.DataFrame(x.toarray())
+        dftmp['tweet_id'] = df.index
+        dftmp = dftmp.set_index('tweet_id')
+
+        dfr = pd.concat([dfr, dftmp], axis=1)
+
         # Column to count uppercase ratio
-        dfr['upper_ratio'] = uppercase_ratio_extract_dataframe(df)
+        dfr['upper_ratio'] = uppercase_ratio_extract_dataframe(df,col_txt=col_txt)
 
-        dfr['has_emoji'] = tweet_has_emoji(df)
+        dfr['has_emoji'] = tweet_has_emoji(df, col_txt=col_txt)
 
-        dfr['text_length'] = count_text_length_dataframe(df)
-        #dfr['len_emoji']=add_emoji_len_column_to_df(df)
+        dfr['text_length'] = count_text_length_dataframe(df, col_txt=col_txt)
+        #number of emojis in text can replace tweet_has_emoji --> comment on Wednesday
+        dfr['len_emoji']=add_emoji_len_column_to_df(df, col_txt=col_txt)
 
         #hot encoding of 'negativereason' and add columns to 'dfr'
         #dfr = create_hot_encoding_dataframe(dfr, df)
+
+        # hot encoding of 'airline' and add columns to 'dfr'
+        # not better results so far, comment if needed
+        # dfr = create_hot_encoding_dataframe_airline(dfr, df)
 
         #create columns with month, day, hour. I think DatetimeIndex method converts in local time using timezone
         #dfr['Month'] = pd.DatetimeIndex(df['tweet_created']).month
