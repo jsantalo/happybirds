@@ -96,9 +96,6 @@ class Trans:
 
         dfr['has_emoji'] = tweet_has_emoji(df)
 
-
-
-
         dfr['text_length'] = count_text_length_dataframe(df)
         #dfr['len_emoji']=add_emoji_len_column_to_df(df)
 
