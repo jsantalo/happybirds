@@ -141,7 +141,7 @@ class Trans:
 
 
     # Return a new dataframe with the transformations done
-    def transform(self, df, dfr=None, count_vectorizer, col_txt='text'):
+    def transform(self, df, count_vectorizer,  dfr=None, col_txt='text'):
 
         if dfr is None:
             dfr = pd.DataFrame()
