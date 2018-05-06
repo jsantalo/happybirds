@@ -82,8 +82,8 @@ for i in range(n_iterations):
     trainpk.fit(x_train, y_train)
     print(y_train)
     y_pred = trainpk.predict(x_validate)
-    print("correlation to sentiment")
-    testing.correlation_to_sentiment(x_train, ctrain, trainpk.get_vocabulary())
+
+    #testing.correlation_to_sentiment(x_train, ctrain, trainpk.get_vocabulary())
 
     score = testing.score_model(y_validate, y_pred, True)
     score_mean = score_mean + score
