@@ -55,46 +55,36 @@ class Train:
         #--- voc = trainpk.get_vocabulary_per_sentiment(ctrain, bow_size2, lemma_extraction=False)
         #--- print(len(voc))
         # filter by pos neg and neu
-        df_neg = df[df['airline_sentiment'] == 'negative']
-        df_neu = df[df['airline_sentiment'] == 'neutral']
-        df_pos = df[df['airline_sentiment'] == 'positive']
+        #hacerlo en un bucle
+        sentiment_options = sorted(df['airline_sentiment'].unique())
+        voc = dict()
 
-        # extract bow_size2 negative terms and see correlation with sentiment
-        self.fit_bigram(data=df_neg.text, bow_size=bow_size2)
-        neg_voc = self.get_vocabulary()
-        voc = neg_voc
+        for sentiment in sentiment_options:
+            df_sent=df[df['airline_sentiment'] == sentiment]
 
-        # Extract de word count and setup the dataframe for correlation analisis
-        x = self.count_vectorizer.transform(df.text)
-        dfr2 = pd.DataFrame(x.toarray())
-        dfr2['tweet_id'] = df.index
-        dfr2 = dfr2.set_index('tweet_id')
-        # see correlation with sentiment
-        print("------NEGATIVE WORDs CORRELATIONS-------")
-        testing.correlation_to_sentiment(dfr2, df, neg_voc, list_correlations=True, list_stats=False)
+            # extract bow_size2 per sentiment_option terms and see correlation with sentiment
+            self.fit_bigram(data=df_sent.text, bow_size=bow_size2)
+            aux_voc = self.get_vocabulary()
 
-        # extract bow_size2 positive terms and see correlation with sentiment
-        #*****if neutral vocabulary needed repeat this part with neutral df****
-        self.fit_bigram(data=df_pos.text, bow_size=bow_size2)
-        pos_voc = self.get_vocabulary()  # continuar aqui
+            # Extract de word count and setup the dataframe for correlation analisis
+            x = self.count_vectorizer.transform(df.text)
+            dfr2 = pd.DataFrame(x.toarray())
+            dfr2['tweet_id'] = df.index
+            dfr2 = dfr2.set_index('tweet_id')
+            # see correlation with sentiment
+            print("------- %s WORDs CORRELATIONS-------"% sentiment)
+            testing.correlation_to_sentiment(dfr2, df, aux_voc, list_correlations=True, list_stats=False)
 
-        # Extract de word count and setup the dataframe for correlation analisis
-        x = self.count_vectorizer.transform(df.text)
-        dfr2 = pd.DataFrame(x.toarray())
-        dfr2['tweet_id'] = df.index
-        dfr2 = dfr2.set_index('tweet_id')
-        # see correlation with sentiment
-        print("------- POSITIVE WORDs CORRELATIONS-------")
-        testing.correlation_to_sentiment(dfr2, df, pos_voc, list_correlations=True, list_stats=False)
+            #add "sentiment" vocabulary to general VOC
+            voc_len = len(voc)
+            n = 0
+            for k in aux_voc.keys():
+                if k not in voc.keys():
+                    voc.update({k: voc_len + n})
+                    n = n + 1
+            print("lenght of vocabulary: %d"% len(voc))
 
-        voc_len = len(voc)
-        n = 0
-        for k in pos_voc.keys():
-            if k not in voc.keys():
-                voc.update({k: voc_len + n})
-                n = n + 1
-        #**** if neutral vocabulary needed repeat this part with neutral df****
-        # creamos el nuevo count_vecrtorizer con el nuevo vocabulario
+        # create new count_vecrtorizer with combined vocabulary
         self.count_vectorizer=CountVectorizer(vocabulary=voc)
         return voc
 
