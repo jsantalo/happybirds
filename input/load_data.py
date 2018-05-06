@@ -6,11 +6,11 @@ def load_dataset(filename='', lan='english'):
     if lan == 'english':
         encoding = 'utf-8'
         if filename == '':
-            filename = '../data/tweets_public.csv'
+            filename = '../happybirds/data/tweets_public.csv'
     elif lan == 'spanish':
         encoding = 'utf-16'
         if filename == '':
-            filename = '../data/tweets_public_es.csv'
+            filename = '../happybirds/data/tweets_public_es.csv'
     else:
         raise Exception('Language not defined')
 

@@ -17,8 +17,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
 
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
-
+import input.load_data as load_data
 
 
 import matplotlib
@@ -26,13 +25,13 @@ import matplotlib
 matplotlib.rcParams['figure.figsize'] = (20.0, 20.0)
 matplotlib.rcParams['figure.dpi'] = 200
 
-import seaborn as sns
-
+language = 'spanish'
+df = load_data.load_dataset(lan=language)
 
 # Read CSV file
-df = pd.read_csv('../happybirds/data/tweets_public.csv', index_col='tweet_id')
+#df = pd.read_csv('../happybirds/data/tweets_public.csv', index_col='tweet_id')
 # Force datatime on the `tweet_created` column
-df.tweet_created = pd.to_datetime(df.tweet_created)
+#df.tweet_created = pd.to_datetime(df.tweet_created)
 # How many tweets do we have?
 print("Number of tweets:", df.shape[0])
 
@@ -59,8 +58,8 @@ for i in range(n_iterations):
     transpk = transform.Trans()
     trainpk = training.Train()
 
-    #pretransform function here
-
+    #pretransform function goes here, no?
+    train, trainr = transpk.pre_transform(df=train)
 
     #dictionrary generator (Count Vectorizer)
     trainpk.fit_bigram(data=ctrain.text, bow_size=1000)
@@ -70,7 +69,7 @@ for i in range(n_iterations):
 
     x_train = transpk.transform(count_vectorizer=cv, df=ctrain)
     y_train = ctrain['airline_sentiment'].values
-    print(x_train.head(100))
+    #print(x_train.head(100))
     x_validate = transpk.transform(count_vectorizer=cv, df=validate)
     y_validate = validate['airline_sentiment'].values
 
