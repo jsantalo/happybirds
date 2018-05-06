@@ -47,6 +47,7 @@ test_size=0.25
 validation_size=0.25
 train, test = train_test_split(df, test_size=test_size)
 
+
 for i in range(n_iterations):
     ctrain, validate = train_test_split(train, test_size=validation_size)
 
@@ -58,22 +59,31 @@ for i in range(n_iterations):
     transpk = transform.Trans()
     trainpk = training.Train()
 
+    #pretransform function here
+
+
+    #dictionrary generator (Count Vectorizer)
     trainpk.fit_bigram(data=ctrain.text, bow_size=1000)
+    cv = trainpk.count_vectorizer
     # bow_size2=50
     # trainpk.get_vocabulary_per_sentiment(ctrain,bow_size2, lemma_extraction=False,ngram_range=(1, 2))
 
-    print(ctrain.head())
-    x_train = transpk.transform(count_vectorizer=trainpk.count_vectorizer, df=ctrain)
+    x_train = transpk.transform(count_vectorizer=cv, df=ctrain)
     y_train = ctrain['airline_sentiment'].values
     print(x_train.head(100))
-    x_validate = transpk.transform(count_vectorizer=trainpk.count_vectorizer, df=validate)
+    x_validate = transpk.transform(count_vectorizer=cv, df=validate)
     y_validate = validate['airline_sentiment'].values
+
+    #print(x_train.describe())
+    #print(x_validate.describe())
 
     trainpk.model = RandomForestClassifier(n_estimators=1000, n_jobs=-1)
 
     trainpk.fit(x_train, y_train)
     print(y_train)
     y_pred = trainpk.predict(x_validate)
+    print("correlation to sentiment")
+    testing.correlation_to_sentiment(x_train, ctrain, trainpk.get_vocabulary())
 
     score = testing.score_model(y_validate, y_pred, True)
     score_mean = score_mean + score
