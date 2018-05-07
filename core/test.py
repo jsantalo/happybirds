@@ -11,47 +11,7 @@ from sklearn.metrics import accuracy_score
 #import core.trans as transform
 import output.kaggle_submit as kaggle_submit
 
-def encode_sentiment(sentiment,sentiment_options):
-    i=0
-    for s in sentiment_options:
-        if (s==sentiment):
-            sentiment_encoded=i
-            break
-        i=i+1
-    return sentiment_encoded
 
-def correlation_to_sentiment(x_train,ctrain,voc,list_correlations =True,list_stats=False,number_features='all'):
-    # prints correlation between characteristics in x_train and airline sentiment in ctrain.
-    # voc is the vocabulary of the count_vectorizer. if needed input trainpk.get_vocabulary()
-    # returns the correlation matrix sorted
-    sentiment_options=sorted(ctrain['airline_sentiment'].unique())
-    print("found %d sentiments: %s"% (len(sentiment_options),sentiment_options))
-    x_train['airline_sentiment']=ctrain['airline_sentiment']
-    x_train['sentiment_encoded']=ctrain['airline_sentiment'].apply(lambda x: encode_sentiment(x,sentiment_options))
-    corrmat = x_train.corr()
-    cor_dict = corrmat['sentiment_encoded'].to_dict()
-    del cor_dict['sentiment_encoded']
-    corr_mat_sorted=sorted(cor_dict.items(), key = lambda x: -abs(x[1]))
-
-    if number_features=='all':
-        number_features=len(corr_mat_sorted)
-    
-    if list_correlations:
-        print("\nList of features in descencing order with its correlation to sentiment:\n")
-        for ele in corr_mat_sorted[0:number_features]:
-            if isinstance(ele[0], int):
-                print("%d [%s] : \t\t%f "% (ele[0], list(voc.keys())[list(voc.values()).index(ele[0])],ele[1]))
-            else:
-                print("{0}: \t\t{1}".format(*ele))
-
-    if list_stats:
-        print("\nMean values of feature grouped by sentiment:\n")
-        for ele in corr_mat_sorted[0:number_features]:
-            if isinstance(ele[0], int):
-                print("the vocabular term for %d is: %s "% (ele[0], list(voc.keys())[list(voc.values()).index(ele[0])]))
-            print(x_train[[ele[0],'airline_sentiment']].groupby('airline_sentiment').mean())
-
-    return corr_mat_sorted
 
 def score_model(y_test, y_pred, verbose=False):
     score = accuracy_score(y_test, y_pred)
