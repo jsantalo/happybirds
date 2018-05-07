@@ -49,6 +49,7 @@ class Train:
 
         return self.count_vectorizer
 
+
     def get_vocabulary_per_sentiment(self, df, bow_size2, lemma_extraction=False):
         # example to call this function...
         #--- bow_size2 = 100

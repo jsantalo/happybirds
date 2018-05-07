@@ -10,6 +10,8 @@ from sklearn.feature_extraction.text import CountVectorizer
 import emoji
 import re
 from operator import itemgetter
+import core.test as testing
+
 
 stop = set(stopwords.words('english')) # when working on the Spanish, change to "spanish"
 
@@ -58,6 +60,28 @@ def text_has_emoji(text):
 
 def tweet_has_emoji(df, col_txt='text'):
     return df[col_txt].apply(text_has_emoji)
+
+
+#find if the tweet has a particular emoji
+def tweet_has_single_emoji(df, emoji_name, col_txt='text'):
+    return df[col_txt].apply((lambda x: text_has_single_emoji(x, emoji_name)))
+
+def text_has_single_emoji(text, emoji_name):
+    for character in text:
+        if character in emoji.UNICODE_EMOJI:
+            character_emoji_name = emoji.demojize(character)
+            if character_emoji_name == emoji_name:
+                #print("character:" + character + ",character_emoji_name:" + character_emoji_name + ",emoji_name:" + emoji_name)
+                return 1
+    return 0
+
+#create one column for each emoji. If the tweet has the particular emoji row== 1, else, row== 0
+def emoji_hot_encoding(df, dfr, emoji_sorted_dict):
+    # iterate the emojis dictionary to create one column per emoji.
+    for k, v in emoji_sorted_dict:
+        # print(emoji.emojize(k + ":" + str(v)))
+        dfr[k] = tweet_has_single_emoji(df, k, col_txt='text')
+    return dfr
 
 
 def extract_emojis(a_list):
@@ -155,6 +179,7 @@ class Trans:
         # Extract de word count and setup the dataframe
         x = count_vectorizer.transform(df[col_txt])
         dftmp = pd.DataFrame(x.toarray())
+
         dftmp['tweet_id'] = df.index
         dftmp = dftmp.set_index('tweet_id')
 
@@ -163,11 +188,12 @@ class Trans:
         # Column to count uppercase ratio
         dfr['upper_ratio'] = uppercase_ratio_extract_dataframe(df,col_txt=col_txt)
 
+
         dfr['has_emoji'] = tweet_has_emoji(df, col_txt=col_txt)
 
         dfr['text_length'] = count_text_length_dataframe(df, col_txt=col_txt)
         #number of emojis in text can replace tweet_has_emoji --> comment on Wednesday
-        dfr['len_emoji']=add_emoji_len_column_to_df(df, col_txt=col_txt)
+        dfr['num_emoji']=add_emoji_len_column_to_df(df, col_txt=col_txt)
 
         #hot encoding of 'negativereason' and add columns to 'dfr'
         #dfr = create_hot_encoding_dataframe(dfr, df)
@@ -183,35 +209,47 @@ class Trans:
         dfr['dayofweek'] = pd.DatetimeIndex(df['tweet_created']).dayofweek
         #print(dfr.describe())
 
-        # create an ordered dictionary with number of emoji appearences for all the tweet
-        self.appearences_emoji_total(df)
+
+        # create an ordered dictionary with number of emoji appearences for all the dataset
+        emoji_sorted_dict = self.appearences_emoji_total(df)
+
+        #hot encoding with one column per emoji present in the emoji_sorted_dict
+        #COMENTED AT THE MOMENT because we have to talk about it on Tuesday
+        #dfr = emoji_hot_encoding(df, dfr, emoji_sorted_dict)
 
         return dfr
+
+
+
 
 
     # analyze which emojis appear more frequently.
     # Once we know the more frequents, classify as positive or negative taking into account the correlation with other P/N tweets
     def appearences_emoji_total(self, df, col_txt='text'):
-        self.emoji_dict = {}  # new dictionary with key=emoji_name, value=num_apperarences
 
-        df[col_txt].apply(self.text_dict_emoji)
-        print("dictionary emoji")
-        print(self.emoji_dict)
-        sorted_dict = sorted(self.emoji_dict.items(), key=itemgetter(1), reverse=True)  # ordenem el dict
-        print("dictionary ordenat")
-        print(sorted_dict)
-        for k, v in sorted_dict:
-            print(emoji.emojize(k + ":" + str(v)))
+        # new dictionary with key=emoji_name, value=num_apperarences
+        self.emoji_dict = {}
+
+        # fill the dictionary with the emojis and number of appearences
+        df[col_txt].apply((lambda x: self.text_dict_emoji(x)))
+
+        #if we want to correlate with sentiment or something....
+        #df[col_txt].apply((lambda x: self.text_dict_emoji(x, df["airline_sentiment"])))
+
+        #sort DESC the dictionary.
+        # At the beginning the idea was to get the emojis with more appearences or more correlation, but at the moment we are using all the emojis. Then, this function is not necessary.
+        emoji_sorted_dict = sorted(self.emoji_dict.items(), key=itemgetter(1), reverse=True)
+        return emoji_sorted_dict
 
 
-    #fill the dictionary with the emojis and appearences
+
     def text_dict_emoji(self, text):
         for character in text:
             if character in emoji.UNICODE_EMOJI:
                 # print(character)
                 emoji_name = emoji.demojize(character)
-                # print(emoji_name)
-                if emoji_name in self.emoji_dict:
+                #print(emoji_name)
+                if emoji_name in self.emoji_dict: #if the emoji exist in dictionary
                     num = self.emoji_dict[emoji_name]
                     self.emoji_dict[emoji_name] = num + 1
                 else:

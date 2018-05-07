@@ -17,8 +17,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
 
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
-
+import input.load_data as load_data
 
 
 import matplotlib
@@ -26,13 +25,13 @@ import matplotlib
 matplotlib.rcParams['figure.figsize'] = (20.0, 20.0)
 matplotlib.rcParams['figure.dpi'] = 200
 
-import seaborn as sns
-
+language = 'spanish'
+df = load_data.load_dataset(lan=language)
 
 # Read CSV file
-df = pd.read_csv('../happybirds/data/tweets_public.csv', index_col='tweet_id')
+#df = pd.read_csv('../happybirds/data/tweets_public.csv', index_col='tweet_id')
 # Force datatime on the `tweet_created` column
-df.tweet_created = pd.to_datetime(df.tweet_created)
+#df.tweet_created = pd.to_datetime(df.tweet_created)
 # How many tweets do we have?
 print("Number of tweets:", df.shape[0])
 
@@ -47,6 +46,7 @@ test_size=0.25
 validation_size=0.25
 train, test = train_test_split(df, test_size=test_size)
 
+
 for i in range(n_iterations):
     ctrain, validate = train_test_split(train, test_size=validation_size)
 
@@ -58,22 +58,31 @@ for i in range(n_iterations):
     transpk = transform.Trans()
     trainpk = training.Train()
 
+    #pretransform function goes here, no?
+    train, trainr = transpk.pre_transform(df=train)
+
+    #dictionrary generator (Count Vectorizer)
     trainpk.fit_bigram(data=ctrain.text, bow_size=1000)
+    cv = trainpk.count_vectorizer
     # bow_size2=50
     # trainpk.get_vocabulary_per_sentiment(ctrain,bow_size2, lemma_extraction=False,ngram_range=(1, 2))
 
-    print(ctrain.head())
-    x_train = transpk.transform(count_vectorizer=trainpk.count_vectorizer, df=ctrain)
+    x_train = transpk.transform(count_vectorizer=cv, df=ctrain)
     y_train = ctrain['airline_sentiment'].values
-    print(x_train.head(100))
-    x_validate = transpk.transform(count_vectorizer=trainpk.count_vectorizer, df=validate)
+    #print(x_train.head(100))
+    x_validate = transpk.transform(count_vectorizer=cv, df=validate)
     y_validate = validate['airline_sentiment'].values
+
+    #print(x_train.describe())
+    #print(x_validate.describe())
 
     trainpk.model = RandomForestClassifier(n_estimators=1000, n_jobs=-1)
 
     trainpk.fit(x_train, y_train)
     print(y_train)
     y_pred = trainpk.predict(x_validate)
+
+    #testing.correlation_to_sentiment(x_train, ctrain, trainpk.get_vocabulary())
 
     score = testing.score_model(y_validate, y_pred, True)
     score_mean = score_mean + score
