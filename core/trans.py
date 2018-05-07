@@ -164,7 +164,7 @@ class Trans:
         dfr['count_url'] = count_url_dataframe(df, col_txt=col_text)
         df[col_text] = remove_url_dataframe(df, col_txt=col_text)
         df[col_text], dfr['number_of_subs_made'] = zip(*df[col_text].apply(remove_repeated))
-        #warning variable is trying to set a copy of itself --> how to deal with??
+        #I am getting a warning "variable is trying to set a copy of itself" --> how to deal with it??
 
 
         return df, dfr
