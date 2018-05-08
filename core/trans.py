@@ -153,6 +153,8 @@ def clean_text_lemmatize(df):
     del df["words_list_porter"]
     return df
 
+
+
 class Trans:
 
     def __init__(self):
@@ -163,6 +165,7 @@ class Trans:
         dfr = pd.DataFrame()
         dfr['tweet_id'] = df.index
         dfr = dfr.set_index('tweet_id')
+        df = df.drop_duplicates(subset='text') # remove dupicate tweets by text
 
         dfr['count_url'] = count_url_dataframe(df, col_txt=col_text)
         df[col_text] = remove_url_dataframe(df, col_txt=col_text)
