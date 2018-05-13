@@ -125,6 +125,10 @@ def count_and_remove_3dot(text):
     #remove repeated characters form text
     return re.subn(r'\.{3,}',r'', text)
 
+def count_and_remove_single_dot(text):
+    #remove repeated characters form text
+    return re.subn(r'\.',r'', text)
+
 def count_text_length(text):
     return len(text)
 
@@ -186,6 +190,7 @@ class Trans:
         df[col_text], dfr['3dot'] = zip(*df[col_text].apply(count_and_remove_3dot))
         df[col_text], dfr['question_marks'] = zip(*df[col_text].apply(count_and_remove_qmark))
         df[col_text], dfr['exclamation'] = zip(*df[col_text].apply(count_and_remove_exclamation))
+        df[col_text], dfr['single_dot'] = zip(*df[col_text].apply(count_and_remove_single_dot)) #always after 3 dot extraction
         df[col_text], dfr['number_of_subs_made'] = zip(*df[col_text].apply(remove_repeated))
         #very few in english text [~16 from 4941 tweets]
         #I am getting a warning "variable is trying to set a copy of itself" --> how to deal with it??
