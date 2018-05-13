@@ -56,20 +56,22 @@ for i in range(n_iterations):
     trainpk = training.Train()
 
     #pretransform function goes here, no?
-    train, trainr = transpk.pre_transform(df=train)
+    ctrain, ctrainr = transpk.pre_transform(df=ctrain)
+    #validate dataset must be pretransformed too
+    validate, validater = transpk.pre_transform(df=validate)
 
-    #dictionrary generator based on regular Count Vectorizer
+    #---dictionrary generator based on regular Count Vectorizer
     #trainpk.fit_bigram(data=ctrain.text, bow_size=1000)
     #cv = trainpk.count_vectorizer
 
-    #dictionary generator based on get_vocabulaty per sentiment
+    #---dictionary generator based on get_vocabulaty per sentiment
     bow_size2 = 50
-    trainpk.get_vocabulary_per_sentiment(ctrain,bow_size2, lemma_extraction=False,language_text=language)
+    trainpk.get_vocabulary_per_sentiment(ctrain, bow_size2, lemma_extraction=False, language_text=language)
 
-    x_train = transpk.transform(count_vectorizer=trainpk.count_vectorizer, df=ctrain)
+    x_train = transpk.transform(count_vectorizer=trainpk.count_vectorizer, df=ctrain, dfr=ctrainr)
     y_train = ctrain['airline_sentiment'].values
     #print(x_train.head(100))
-    x_validate = transpk.transform(count_vectorizer=trainpk.count_vectorizer, df=validate)
+    x_validate = transpk.transform(count_vectorizer=trainpk.count_vectorizer, df=validate, dfr=validater)
     y_validate = validate['airline_sentiment'].values
 
     #print(x_train.describe())

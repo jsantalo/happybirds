@@ -113,6 +113,18 @@ def count_and_remove_puntuation(text):
     #remove repeated characters form text
     return re.subn(r'\.{3,}|!{1,}|\?{1,}',r'', text)
 
+def count_and_remove_exclamation(text):
+    #remove repeated characters form text
+    return re.subn(r'!{1,}',r'', text)
+
+def count_and_remove_qmark(text):
+    #remove repeated characters form text
+    return re.subn(r'\?{1,}',r'', text)
+
+def count_and_remove_3dot(text):
+    #remove repeated characters form text
+    return re.subn(r'\.{3,}',r'', text)
+
 def count_text_length(text):
     return len(text)
 
@@ -170,7 +182,10 @@ class Trans:
 
         dfr['count_url'] = count_url_dataframe(df, col_txt=col_text)
         df[col_text] = remove_url_dataframe(df, col_txt=col_text)
-        df[col_text], dfr['puntuation_removed'] = zip(*df[col_text].apply(count_and_remove_puntuation))
+        #df[col_text], dfr['puntuation_removed'] = zip(*df[col_text].apply(count_and_remove_puntuation))
+        df[col_text], dfr['3dot'] = zip(*df[col_text].apply(count_and_remove_3dot))
+        df[col_text], dfr['question_marks'] = zip(*df[col_text].apply(count_and_remove_qmark))
+        df[col_text], dfr['exclamation'] = zip(*df[col_text].apply(count_and_remove_exclamation))
         df[col_text], dfr['number_of_subs_made'] = zip(*df[col_text].apply(remove_repeated))
         #very few in english text [~16 from 4941 tweets]
         #I am getting a warning "variable is trying to set a copy of itself" --> how to deal with it??
