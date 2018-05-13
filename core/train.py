@@ -93,13 +93,14 @@ class Train:
         return self.count_vectorizer
 
 
-    def get_vocabulary_per_sentiment(self, df, bow_size2, lemma_extraction=False):
+    def get_vocabulary_per_sentiment(self, df, bow_size2, lemma_extraction=False,language_text='english'):
         # example to call this function...
         #--- bow_size2 = 100
         #--- voc = trainpk.get_vocabulary_per_sentiment(ctrain, bow_size2, lemma_extraction=False)
         #--- print(len(voc))
         # filter by pos neg and neu
         #hacerlo en un bucle
+
         sentiment_options = sorted(df['airline_sentiment'].unique())
         voc = dict()
 
@@ -107,7 +108,7 @@ class Train:
             df_sent=df[df['airline_sentiment'] == sentiment]
 
             # extract bow_size2 per sentiment_option terms and see correlation with sentiment
-            self.fit_bigram(data=df_sent.text, bow_size=bow_size2)
+            self.fit_bigram(data=df_sent.text, bow_size=bow_size2,lemma_extraction=lemma_extraction,language=language_text)
             aux_voc = self.get_vocabulary()
 
             # Extract de word count and setup the dataframe for correlation analisis

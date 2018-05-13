@@ -10,7 +10,7 @@ from sklearn.feature_extraction.text import CountVectorizer
 import emoji
 import re
 from operator import itemgetter
-import core.test as testing
+#import core.test as testing
 
 
 stop = set(stopwords.words('english')) # when working on the Spanish, change to "spanish"
@@ -162,10 +162,11 @@ class Trans:
 
     def pre_transform(self, df, col_text='text'):
 
+        df = df.drop_duplicates(subset='text')  # remove dupicate tweets by text
         dfr = pd.DataFrame()
         dfr['tweet_id'] = df.index
         dfr = dfr.set_index('tweet_id')
-        df = df.drop_duplicates(subset='text') # remove dupicate tweets by text
+
 
         dfr['count_url'] = count_url_dataframe(df, col_txt=col_text)
         df[col_text] = remove_url_dataframe(df, col_txt=col_text)

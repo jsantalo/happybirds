@@ -5,9 +5,6 @@ import core.train as training
 import core.trans as transform
 import core.test as testing
 
-#pd.options.display.max_columns = None
-#pd.options.display.max_rows = None
-
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
@@ -25,7 +22,7 @@ import matplotlib
 matplotlib.rcParams['figure.figsize'] = (20.0, 20.0)
 matplotlib.rcParams['figure.dpi'] = 200
 
-language = 'spanish'
+language = 'english' #options: spanish, english
 df = load_data.load_dataset(lan=language)
 
 # Read CSV file
@@ -61,16 +58,18 @@ for i in range(n_iterations):
     #pretransform function goes here, no?
     train, trainr = transpk.pre_transform(df=train)
 
-    #dictionrary generator (Count Vectorizer)
-    trainpk.fit_bigram(data=ctrain.text, bow_size=1000)
-    cv = trainpk.count_vectorizer
-    # bow_size2=50
-    # trainpk.get_vocabulary_per_sentiment(ctrain,bow_size2, lemma_extraction=False,ngram_range=(1, 2))
+    #dictionrary generator based on regular Count Vectorizer
+    #trainpk.fit_bigram(data=ctrain.text, bow_size=1000)
+    #cv = trainpk.count_vectorizer
 
-    x_train = transpk.transform(count_vectorizer=cv, df=ctrain)
+    #dictionary generator based on get_vocabulaty per sentiment
+    bow_size2 = 50
+    trainpk.get_vocabulary_per_sentiment(ctrain,bow_size2, lemma_extraction=False,language_text=language)
+
+    x_train = transpk.transform(count_vectorizer=trainpk.count_vectorizer, df=ctrain)
     y_train = ctrain['airline_sentiment'].values
     #print(x_train.head(100))
-    x_validate = transpk.transform(count_vectorizer=cv, df=validate)
+    x_validate = transpk.transform(count_vectorizer=trainpk.count_vectorizer, df=validate)
     y_validate = validate['airline_sentiment'].values
 
     #print(x_train.describe())
