@@ -1,5 +1,10 @@
 ﻿# happybirds
 
+This is a repository for a university project. The task is to create a machine learning model to predict the sentiment of a tweet about airlines based on annotated data. We use the readme for brainstorming.
+
+---------------------------------------------------------------------------------------------------------------------------------
+
+
 ideas:
 
 FE extraction from RAW
