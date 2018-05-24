@@ -12,6 +12,7 @@ import numpy as np
 from sklearn.naive_bayes import BernoulliNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.svm import SVC
 
 from sklearn.model_selection import train_test_split
 import input.load_data as load_data
@@ -77,7 +78,10 @@ for i in range(n_iterations):
     #print(x_train.describe())
     #print(x_validate.describe())
 
-    trainpk.model = RandomForestClassifier(n_estimators=1000, n_jobs=-1)
+    #trainpk.model = RandomForestClassifier(n_estimators=1000, n_jobs=-1)
+    trainpk.model = SVC(C=1.0, kernel="rbf", degree=3, gamma="auto", coef0=0.0, shrinking=True, probability=False,
+                    tol=0.001, cache_size=200, class_weight=None, verbose=False, max_iter=-1, decision_function_shape="ovr",
+                    random_state=None)
 
     trainpk.fit(x_train, y_train)
     print(y_train)
