@@ -22,7 +22,7 @@ import matplotlib
 matplotlib.rcParams['figure.figsize'] = (20.0, 20.0)
 matplotlib.rcParams['figure.dpi'] = 200
 
-language = 'english' #options: spanish, english
+language = 'spanish' #options: spanish, english
 df = load_data.load_dataset(lan=language)
 
 # Read CSV file
@@ -61,12 +61,12 @@ for i in range(n_iterations):
     validate, validater = transpk.pre_transform(df=validate)
 
     #---dictionrary generator based on regular Count Vectorizer
-    #trainpk.fit_bigram(data=ctrain.text, bow_size=1000)
-    #cv = trainpk.count_vectorizer
+    trainpk.fit_bigram(data=ctrain.text, bow_size=100)
+    cv = trainpk.count_vectorizer
 
     #---dictionary generator based on get_vocabulaty per sentiment
-    bow_size2 = 50
-    trainpk.get_vocabulary_per_sentiment(ctrain, bow_size2, lemma_extraction=False, language_text=language)
+    #bow_size2 = 500
+    #trainpk.get_vocabulary_per_sentiment(ctrain, bow_size2, lemma_extraction=False, language_text=language)
 
     x_train = transpk.transform(count_vectorizer=trainpk.count_vectorizer, df=ctrain, dfr=ctrainr)
     y_train = ctrain['airline_sentiment'].values

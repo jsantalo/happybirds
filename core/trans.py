@@ -169,6 +169,13 @@ def clean_text_lemmatize(df):
     del df["words_list_porter"]
     return df
 
+#TODO falta eliminar la row
+def remove_tweets_with_word(df, word):
+    count_spainair_tweets = 0
+    for index, row in df.iterrows():
+        if word in row['text']:
+            count_spainair_tweets = count_spainair_tweets + 1
+    print("nombre tweets spainair:" + str(count_spainair_tweets))
 
 
 class Trans:
@@ -178,14 +185,21 @@ class Trans:
 
     def pre_transform(self, df, col_text='text'):
 
-        df = df.drop_duplicates(subset='text')  # remove dupicate tweets by text
+        #dataframe to enter inside the Classifier
         dfr = pd.DataFrame()
+
+        df[col_text] = remove_url_dataframe(df, col_txt=col_text)
+
+        #drop duplicates should be after remove url, otherwise the url create a different tweet
+        df = df.drop_duplicates(subset='text')  # remove dupicate tweets by text
+
         dfr['tweet_id'] = df.index
         dfr = dfr.set_index('tweet_id')
 
-
         dfr['count_url'] = count_url_dataframe(df, col_txt=col_text)
-        df[col_text] = remove_url_dataframe(df, col_txt=col_text)
+
+        remove_tweets_with_word(df, "Spanair")
+
         #df[col_text], dfr['puntuation_removed'] = zip(*df[col_text].apply(count_and_remove_puntuation))
         df[col_text], dfr['3dot'] = zip(*df[col_text].apply(count_and_remove_3dot))
         df[col_text], dfr['question_marks'] = zip(*df[col_text].apply(count_and_remove_qmark))
