@@ -12,6 +12,7 @@ import numpy as np
 from sklearn.naive_bayes import BernoulliNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.svm import SVC
 
 from sklearn.model_selection import train_test_split
 import input.load_data as load_data
@@ -22,7 +23,7 @@ import matplotlib
 matplotlib.rcParams['figure.figsize'] = (20.0, 20.0)
 matplotlib.rcParams['figure.dpi'] = 200
 
-language = 'english' #options: spanish, english
+language = 'spanish' #options: spanish, english
 df = load_data.load_dataset(lan=language)
 
 # Read CSV file
@@ -61,12 +62,12 @@ for i in range(n_iterations):
     validate, validater = transpk.pre_transform(df=validate)
 
     #---dictionrary generator based on regular Count Vectorizer
-    #trainpk.fit_bigram(data=ctrain.text, bow_size=1000)
-    #cv = trainpk.count_vectorizer
+    trainpk.fit_bigram(data=ctrain.text, bow_size=1000)
+    cv = trainpk.count_vectorizer
 
     #---dictionary generator based on get_vocabulaty per sentiment
-    bow_size2 = 50
-    trainpk.get_vocabulary_per_sentiment(ctrain, bow_size2, lemma_extraction=False, language_text=language)
+    #bow_size2 = 50
+    #trainpk.get_vocabulary_per_sentiment(ctrain, bow_size2, lemma_extraction=False, language_text=language)
 
     x_train = transpk.transform(count_vectorizer=trainpk.count_vectorizer, df=ctrain, dfr=ctrainr)
     y_train = ctrain['airline_sentiment'].values
@@ -77,7 +78,10 @@ for i in range(n_iterations):
     #print(x_train.describe())
     #print(x_validate.describe())
 
-    trainpk.model = RandomForestClassifier(n_estimators=1000, n_jobs=-1)
+    #trainpk.model = RandomForestClassifier(n_estimators=1000, n_jobs=-1)
+    trainpk.model = SVC(C=1.0, kernel="rbf", degree=3, gamma="auto", coef0=0.0, shrinking=True, probability=False,
+                    tol=0.001, cache_size=200, class_weight=None, verbose=False, max_iter=-1, decision_function_shape="ovr",
+                    random_state=None)
 
     trainpk.fit(x_train, y_train)
     print(y_train)
