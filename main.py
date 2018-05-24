@@ -62,11 +62,11 @@ for i in range(n_iterations):
     validate, validater = transpk.pre_transform(df=validate)
 
     #---dictionrary generator based on regular Count Vectorizer
-    trainpk.fit_bigram(data=ctrain.text, bow_size=1000)
+    trainpk.fit_bigram(data=ctrain.text, bow_size=100)
     cv = trainpk.count_vectorizer
 
     #---dictionary generator based on get_vocabulaty per sentiment
-    #bow_size2 = 50
+    #bow_size2 = 500
     #trainpk.get_vocabulary_per_sentiment(ctrain, bow_size2, lemma_extraction=False, language_text=language)
 
     x_train = transpk.transform(count_vectorizer=trainpk.count_vectorizer, df=ctrain, dfr=ctrainr)
