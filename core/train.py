@@ -96,7 +96,7 @@ class Train:
     def get_vocabulary_per_sentiment(self, df, bow_size2, lemma_extraction=False,language_text='english',exclude_neutral=False):
         # example to call this function...
         #--- bow_size2 = 100
-        #--- voc = trainpk.get_vocabulary_per_sentiment(ctrain, bow_size2, lemma_extraction=False)
+        #--- voc = trainpk.get_vocabulary_per_sentiment(ctrain, bow_size2, lemma_extraction=False,language_text=language)
         #--- print(len(voc))
         # filter by pos neg and neu
         #hacerlo en un bucle
