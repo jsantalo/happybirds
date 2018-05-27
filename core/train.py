@@ -93,7 +93,7 @@ class Train:
         return self.count_vectorizer
 
 
-    def get_vocabulary_per_sentiment(self, df, bow_size2, lemma_extraction=False,language_text='english'):
+    def get_vocabulary_per_sentiment(self, df, bow_size2, lemma_extraction=False,language_text='english',exclude_neutral=False):
         # example to call this function...
         #--- bow_size2 = 100
         #--- voc = trainpk.get_vocabulary_per_sentiment(ctrain, bow_size2, lemma_extraction=False)
@@ -102,6 +102,8 @@ class Train:
         #hacerlo en un bucle
 
         sentiment_options = sorted(df['airline_sentiment'].unique())
+        if exclude_neutral:
+            sentiment_options =['negative','positive']
         voc = dict()
 
         for sentiment in sentiment_options:
