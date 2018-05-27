@@ -5,6 +5,7 @@ from nltk.tokenize import TweetTokenizer
 
 from nltk import PorterStemmer
 from nltk import LancasterStemmer
+from sklearn.preprocessing import StandardScaler
 
 from sklearn.feature_extraction.text import CountVectorizer
 import emoji
@@ -262,9 +263,16 @@ class Trans:
 
         return dfr
 
-
-
-
+    def normalize_train_data(self, dfr):
+        #normalize data to the mean and variance of train data
+        self.scaler = StandardScaler()
+        dfr = self.scaler.fit_transform(dfr)
+        return dfr
+    def normalize_validate_data(self, validate):
+        #normalize validate data with the mean and variance of train data.
+        #Must ve called after "normalize_train_data"
+        validate = self.scaler.transform(validate)
+        return validate
 
     # analyze which emojis appear more frequently.
     # Once we know the more frequents, classify as positive or negative taking into account the correlation with other P/N tweets
