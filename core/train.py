@@ -2,7 +2,7 @@ from nltk import word_tokenize
 from nltk.stem import WordNetLemmatizer
 from sklearn.feature_extraction.text import CountVectorizer
 from nltk.corpus import stopwords
-import core.test as testing
+#import core.test as testing
 import pandas as pd
 
 

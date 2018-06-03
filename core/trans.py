@@ -11,8 +11,6 @@ from sklearn.feature_extraction.text import CountVectorizer
 import emoji
 import re
 from operator import itemgetter
-#import core.test as testing
-
 
 stop = set(stopwords.words('english')) # when working on the Spanish, change to "spanish"
 
@@ -186,8 +184,6 @@ class Trans:
         #dataframe to enter inside the Classifier
         dfr = pd.DataFrame()
 
-        df[col_text] = remove_url_dataframe(df, col_txt=col_text)
-
         #drop duplicates should be after remove url, otherwise the url create a different tweet
         df = df.drop_duplicates(subset='text')  # remove dupicate tweets by text
 
@@ -198,6 +194,8 @@ class Trans:
 
         dfr['count_url'] = count_url_dataframe(df, col_txt=col_text)
 
+        df[col_text] = remove_url_dataframe(df, col_txt=col_text)
+        
         #df[col_text], dfr['puntuation_removed'] = zip(*df[col_text].apply(count_and_remove_puntuation))
         df[col_text], dfr['3dot'] = zip(*df[col_text].apply(count_and_remove_3dot))
         df[col_text], dfr['question_marks'] = zip(*df[col_text].apply(count_and_remove_qmark))
@@ -220,7 +218,6 @@ class Trans:
         # Extract de word count and setup the dataframe
         x = count_vectorizer.transform(df[col_txt])
         dftmp = pd.DataFrame(x.toarray())
-
         dftmp['tweet_id'] = df.index
         dftmp = dftmp.set_index('tweet_id')
 
@@ -228,7 +225,6 @@ class Trans:
 
         # Column to count uppercase ratio
         dfr['upper_ratio'] = uppercase_ratio_extract_dataframe(df,col_txt=col_txt)
-
 
         dfr['has_emoji'] = tweet_has_emoji(df, col_txt=col_txt)
 
@@ -289,8 +285,17 @@ class Trans:
         emoji_sorted_dict = sorted(self.emoji_dict.items(), key=itemgetter(1), reverse=True)
         return emoji_sorted_dict
 
+        if verbose:
+            print("dictionary emoji")
+            print(self.emoji_dict)
+            sorted_dict = sorted(self.emoji_dict.items(), key=itemgetter(1), reverse=True)  # ordenem el dict
+            print("dictionary ordenat")
+            print(sorted_dict)
+            for k, v in sorted_dict:
+                print(emoji.emojize(k + ":" + str(v)))
 
 
+    #fill the dictionary with the emojis and appearences
     def text_dict_emoji(self, text):
         for character in text:
             if character in emoji.UNICODE_EMOJI:
