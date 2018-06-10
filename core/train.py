@@ -169,7 +169,7 @@ class Train:
 
 
 
-    def optimize_happy_SCV(self, X, y,kernel="rbf"):
+    def optimize_happy_SVC(self, X, y,kernel="rbf"):
 
         print("optimization start")
 
