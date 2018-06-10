@@ -6,9 +6,9 @@ from sklearn import svm
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 
-#import core.train as training
+import core.train as training
 #get some problems with this imports, do not know why..
-#import core.trans as transform
+import core.trans as transform
 import output.kaggle_submit as kaggle_submit
 
 
@@ -19,10 +19,6 @@ def score_model(y_test, y_pred, verbose=False):
         print("Model score is: {}".format(score))
 
     return score
-
-
-def load_from_csv(filename, index_col='tweet_id'):
-    return pd.read_csv(filename, index_col=index_col)
 
 
 class Test:
@@ -39,28 +35,28 @@ class Test:
         self.trainpk = None
 
 
-    def train_validate_test(self, filename=None, verbose=False, kaggle_filename=None):
-
-        if kaggle_filename is None:
-            test_size = self.test_size
-            validation_size = self.validation_size
-            n_iterations = self.n_iterations
-
-            generate_kaggle = False
-        else:
-            test_size = 0
-            validation_size = 0
-            n_iterations = 1
-
-            generate_kaggle = True
+    def train_validate_test(self, filename=None, verbose=False, kaggle_filename=None, language='english'):
 
         if filename is not None:
-            self.df = load_from_csv(filename)
+            self.df = load_data.load_dataset(filename=filename, lan=language)
+        else:
+            self.df = load_data.load_dataset(lan=language)
 
-        train, test = train_test_split(self.df, test_size=test_size)
+        validation_size = self.validation_size
+        n_iterations = self.n_iterations
 
-        if generate_kaggle:
-            test = load_from_csv(kaggle_filename)
+        if kaggle_filename is None:
+
+            train, test = train_test_split(self.df, test_size=self.test_size)
+
+            generate_kaggle = False
+
+        else:
+
+            train = self.df
+            test = load_data.load_dataset(filename=kaggle_filename, lan=language)
+
+            generate_kaggle = True
 
         rdf = pd.DataFrame(columns=['score_train', 'score_validate', 'trans', 'train'])
 
@@ -74,10 +70,12 @@ class Test:
             transpk = transform.Trans()
             trainpk = training.Train()
 
-            trainpk.fit_bigram(data=ctrain.text, bow_size=1000)
+            ctrain, ctrainr = transpk.pre_transform(df=ctrain)
 
-            print(trainpk.count_vectorizer.vocabulary_)
-            x_train = transpk.transform(count_vectorizer=trainpk.count_vectorizer, df=ctrain)
+            trainpk.fit_bigram(data=ctrain.text, bow_size=1000, language=language)
+
+            #print(trainpk.count_vectorizer.vocabulary_)
+            x_train = transpk.transform(count_vectorizer=trainpk.count_vectorizer, df=ctrain, dfr=ctrainr)
             y_train = ctrain['airline_sentiment'].values
 
             trainpk.model = RandomForestClassifier(n_estimators=1000, n_jobs=-1)
@@ -93,7 +91,8 @@ class Test:
                 print("Model train score is: {}".format(score_train))
 
             if validation_size > 0:
-                x_validate = transpk.transform(count_vectorizer=trainpk.count_vectorizer, df=validate)
+                validate, validater = transpk.pre_transform(df=validate)
+                x_validate = transpk.transform(count_vectorizer=trainpk.count_vectorizer, df=validate, dfr=validater)
                 y_validate = validate['airline_sentiment'].values
 
                 y_validate_pred = trainpk.predict(x_validate)
@@ -117,7 +116,8 @@ class Test:
         self.transpk = best['trans']
         self.trainpk = best['train']
 
-        x_test = transpk.transform(count_vectorizer=trainpk.count_vectorizer, df=test)
+        test, testr = transpk.pre_transform(df=test)
+        x_test = transpk.transform(count_vectorizer=trainpk.count_vectorizer, df=test, dfr=testr)
 
         y_pred = trainpk.predict(x_test)
 
