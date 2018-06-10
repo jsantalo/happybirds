@@ -91,7 +91,7 @@ for i in range(n_iterations):
     #trainpk.model = SVC(C=10.0, kernel=kernel, degree=3, gamma=0.00010000000000000001, coef0=0.0, shrinking=True,
      #                   probability=False, tol=0.001, cache_size=200, class_weight=None, verbose=False, max_iter=-1,
       #                  decision_function_shape="ovr", random_state=None)
-    trainpk.optimize_happy_SCV(x_train, y_train, kernel=kernel)
+    trainpk.optimize_happy_SVC(x_train, y_train, kernel=kernel)
     #trainpk.model = LinearSVC(penalty="l2", dual=True, tol=0.0001, C=1000.0, multi_class="ovr",
     #                fit_intercept=True, intercept_scaling=1, class_weight=None, verbose=0, random_state=None, max_iter=1000)
 
