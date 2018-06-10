@@ -6,6 +6,8 @@ from nltk.tokenize import TweetTokenizer
 from nltk import PorterStemmer
 from nltk import LancasterStemmer
 from sklearn.preprocessing import StandardScaler
+from nltk.stem.snowball import SnowballStemmer
+from sklearn.feature_selection import VarianceThreshold
 
 from sklearn.feature_extraction.text import CountVectorizer
 import emoji
@@ -170,6 +172,15 @@ def clean_text_lemmatize(df):
     del df["words_list_porter"]
     return df
 
+def text_lemmatize_snowball(df,language = "english",text_col = 'text_snowball'):
+    stemmer_lan = SnowballStemmer(language)
+    print(" ".join(SnowballStemmer.languages))
+    df['text_w'] = df['text'].apply(lambda x: [stemmer_lan.stem(word) for word in x.split()])  # stemmer snowball
+    df[text_col] = df['text_w'].apply(lambda x: ' '.join(x))
+    del df['text_w']
+
+    return df[text_col]
+
 def remove_tweets_with_word(df, word):
     #print(df.text.count())
     new_df = df[df.text.str.contains(word) == False]
@@ -181,7 +192,7 @@ class Trans:
     def __init__(self):
         pass
 
-    def pre_transform(self, df, col_text='text'):
+    def pre_transform(self, df, col_text='text', language = "english"):
 
         #dataframe to enter inside the Classifier
         dfr = pd.DataFrame()
@@ -192,7 +203,8 @@ class Trans:
         df = df.drop_duplicates(subset='text')  # remove dupicate tweets by text
 
         df = remove_tweets_with_word(df, "Spanair")
-
+        #df = remove_tweets_with_word(df, "olombia")
+        #df = remove_tweets_with_word(df, "rgentina") #forma rapida para eliminar los de holacolombia y los de holaargentina
         dfr['tweet_id'] = df.index
         dfr = dfr.set_index('tweet_id')
 
@@ -206,7 +218,7 @@ class Trans:
         df[col_text], dfr['number_of_subs_made'] = zip(*df[col_text].apply(remove_repeated))
         #very few in english text [~16 from 4941 tweets]
         #I am getting a warning "variable is trying to set a copy of itself" --> how to deal with it??
-
+        #df['text'] = text_lemmatize_snowball(df, language,text_col = 'text') ## Snowball lemmatization over text
 
         return df, dfr
 
