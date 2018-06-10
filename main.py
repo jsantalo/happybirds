@@ -58,21 +58,22 @@ for i in range(n_iterations):
     trainpk = training.Train()
 
     #pretransform function goes here, no?
-    ctrain, ctrainr = transpk.pre_transform(df=ctrain)
+    ctrain, ctrainr = transpk.pre_transform(df=ctrain, language=language)
     #validate dataset must be pretransformed too
-    validate, validater = transpk.pre_transform(df=validate)
+    validate, validater = transpk.pre_transform(df=validate, language=language)
 
     #---dictionrary generator based on regular Count Vectorizer
-    #trainpk.fit_bigram(data=ctrain.text, bow_size=200)
+    #trainpk.fit_bigram(data=ctrain.text, bow_size=5000)
     #cv = trainpk.count_vectorizer
 
     #---dictionary generator based on get_vocabulaty per sentiment
-    bow_size2 = 200
+    bow_size2 = 2000
     trainpk.get_vocabulary_per_sentiment(ctrain, bow_size2, lemma_extraction=False, language_text=language,
-                                         exclude_neutral = False)
+                                         exclude_neutral = False,col_text = 'text')
 
     x_train = transpk.transform(count_vectorizer=trainpk.count_vectorizer, df=ctrain, dfr=ctrainr)
     y_train = ctrain['airline_sentiment'].values
+
     x_train = transpk.normalize_train_data(x_train)
     #print(x_train.head(100))
     x_validate = transpk.transform(count_vectorizer=trainpk.count_vectorizer, df=validate, dfr=validater)
@@ -83,13 +84,14 @@ for i in range(n_iterations):
     #print(x_validate.describe())
 
     #trainpk.model = RandomForestClassifier(n_estimators=1000, n_jobs=-1)
-    kernel="rbf"
+    kernel = "rbf"
     #kernel="sigmoid"
     #best results so far with a rbf kernel, C=1000, gamma=0.0001 and quite independent of number of words 200 or 1000 with usual classifier
-    trainpk.model = SVC(C=1000.0, kernel=kernel, degree=3, gamma=0.00010000000000000001, coef0=0.0, shrinking=True,
-                        probability=False, tol=0.001, cache_size=200, class_weight=None, verbose=False, max_iter=-1,
-                        decision_function_shape="ovr", random_state=None)
 
+    #trainpk.model = SVC(C=10.0, kernel=kernel, degree=3, gamma=0.00010000000000000001, coef0=0.0, shrinking=True,
+     #                   probability=False, tol=0.001, cache_size=200, class_weight=None, verbose=False, max_iter=-1,
+      #                  decision_function_shape="ovr", random_state=None)
+    trainpk.optimize_happy_SCV(x_train, y_train, kernel=kernel)
     #trainpk.model = LinearSVC(penalty="l2", dual=True, tol=0.0001, C=1000.0, multi_class="ovr",
     #                fit_intercept=True, intercept_scaling=1, class_weight=None, verbose=0, random_state=None, max_iter=1000)
 
