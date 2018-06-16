@@ -248,6 +248,7 @@ def tokenization (data, col_txt='text', language='english'):
 
     return tokenized_corpus
 
+
 class Trans:
 
     def __init__(self):
