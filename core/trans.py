@@ -2,15 +2,21 @@ import pandas as pd
 from nltk.corpus import stopwords
 
 from nltk.tokenize import TweetTokenizer
+from nltk.tokenize import RegexpTokenizer
 
 from nltk import PorterStemmer
 from nltk import LancasterStemmer
+from nltk import SnowballStemmer
+
 from sklearn.preprocessing import StandardScaler
 
 from sklearn.feature_extraction.text import CountVectorizer
 import emoji
 import re
 from operator import itemgetter
+import numpy as np
+from sklearn.feature_extraction.text import TfidfVectorizer
+from collections import defaultdict
 
 stop = set(stopwords.words('english')) # when working on the Spanish, change to "spanish"
 
@@ -36,6 +42,7 @@ def remove_url(text):
 
 def remove_url_dataframe(df, col_txt='text'):
     return df[col_txt].apply(remove_url)
+
 
 
 def count_urls(text):
@@ -173,21 +180,89 @@ def remove_tweets_with_word(df, word):
     new_df = df[df.text.str.contains(word) == False]
     return new_df
 
+class TfidfEmbeddingVectorizer(object):
+    def __init__(self, word2vec):
+        self.word2vec = word2vec
+        self.word2weight = None
+        if len(word2vec)>0:
+            self.dim=len(word2vec[next(iter(word2vec))])
+        else:
+            self.dim=0
+
+    def fit(self, X, y):
+        tfidf = TfidfVectorizer(analyzer=lambda x: x)
+        tfidf.fit(X)
+        # if a word was never seen - it must be at least as infrequent
+        # as any of the known words - so the default idf is the max of
+        # known idf's
+        max_idf = max(tfidf.idf_)
+        self.word2weight = defaultdict(
+            lambda: max_idf,
+            [(w, tfidf.idf_[i]) for w, i in tfidf.vocabulary_.items()])
+
+        return self
+
+    def transform(self, X):
+        return np.array([
+                np.mean([self.word2vec[w] * self.word2weight[w]
+                         for w in words if w in self.word2vec] or
+                        [np.zeros(self.dim)], axis=0)
+                for words in X
+            ])
+
+
+
+#averaging word vectors for all words in a text.
+class MeanEmbeddingVectorizer(object):
+    def __init__(self, word2vec):
+        self.word2vec = word2vec
+        # if a text is empty we should return a vector of zeros
+        # with the same dimensionality as all the other vectors
+        if len(word2vec)>0:
+            self.dim=len(word2vec[next(iter(word2vec))])
+        else:
+            self.dim=0
+
+    def fit(self, X, y):
+        return self
+
+    def transform(self, X):
+        return np.array([
+            np.mean([self.word2vec[w] for w in words if w in self.word2vec]
+                    or [np.zeros(self.dim)], axis=0)
+            for words in X
+        ])
+
+
+def tokenization (data, col_txt='text', language='english'):
+
+    tkr = RegexpTokenizer('[a-zA-Z0-9@]+')
+    # stemmer = LancasterStemmer()
+    stemmer = SnowballStemmer(language)
+
+    tokenized_corpus = []
+
+    for i, tweet in enumerate(data[col_txt]):
+        tokens = [stemmer.stem(t) for t in tkr.tokenize(tweet) if not t.startswith('@') and t not in stopwords.words(language) ]
+        tokenized_corpus.append(tokens)
+
+    return tokenized_corpus
 
 class Trans:
 
     def __init__(self):
         pass
 
-    def pre_transform(self, df, col_text='text'):
+
+    def pre_transform(self, df, col_text='text', language='english'):
 
         #dataframe to enter inside the Classifier
         dfr = pd.DataFrame()
 
         #drop duplicates should be after remove url, otherwise the url create a different tweet
-        df = df.drop_duplicates(subset='text')  # remove dupicate tweets by text
+        #df = df.drop_duplicates(subset='text')  # remove dupicate tweets by text
 
-        df = remove_tweets_with_word(df, "Spanair")
+        #df = remove_tweets_with_word(df, "Spanair")
 
         dfr['tweet_id'] = df.index
         dfr = dfr.set_index('tweet_id')
@@ -195,6 +270,9 @@ class Trans:
         dfr['count_url'] = count_url_dataframe(df, col_txt=col_text)
 
         df[col_text] = remove_url_dataframe(df, col_txt=col_text)
+
+        # Column to count uppercase ratio
+        dfr['upper_ratio'] = uppercase_ratio_extract_dataframe(df, col_txt=col_text)
         
         #df[col_text], dfr['puntuation_removed'] = zip(*df[col_text].apply(count_and_remove_puntuation))
         df[col_text], dfr['3dot'] = zip(*df[col_text].apply(count_and_remove_3dot))
@@ -205,26 +283,46 @@ class Trans:
         #very few in english text [~16 from 4941 tweets]
         #I am getting a warning "variable is trying to set a copy of itself" --> how to deal with it??
 
+        #df = clean_text_lemmatize(df)
+        df[col_text] = df[col_text].apply(lambda x: x.lower())
+
+        df['tokenized_corpus'] = tokenization(df, col_txt=col_text, language=language);
 
         return df, dfr
 
 
     # Return a new dataframe with the transformations done
-    def transform(self, df, count_vectorizer,  dfr=None, col_txt='text'):
+    def transform(self, df, count_vectorizer=None, word2vec=None,  dfr=None, col_txt='text'):
 
         if dfr is None:
             dfr = pd.DataFrame()
 
-        # Extract de word count and setup the dataframe
-        x = count_vectorizer.transform(df[col_txt])
-        dftmp = pd.DataFrame(x.toarray())
-        dftmp['tweet_id'] = df.index
-        dftmp = dftmp.set_index('tweet_id')
+        if count_vectorizer is not None:
+            # Extract de word count and setup the dataframe
+            x = count_vectorizer.transform(df[col_txt])
+            dftmp = pd.DataFrame(x.toarray())
+            dftmp['tweet_id'] = df.index
+            dftmp = dftmp.set_index('tweet_id')
 
-        dfr = pd.concat([dfr, dftmp], axis=1)
+            dfr = pd.concat([dfr, dftmp], axis=1)
 
-        # Column to count uppercase ratio
-        dfr['upper_ratio'] = uppercase_ratio_extract_dataframe(df,col_txt=col_txt)
+        if word2vec is not None and hasattr(df, 'tokenized_corpus'):
+
+            colnames = []
+            for i in range(0, word2vec.vector_size):
+                colnames.append('w2v_' + str(i))
+
+            dftmp = pd.DataFrame(columns=colnames)
+            for i, token_vec in df.tokenized_corpus.iteritems():
+                vec = [word2vec[token] for token in token_vec if token in word2vec.vocab]
+                if len(vec) > 0:
+                    mean = np.mean(np.array(vec), axis=0)
+                else:
+                    mean = np.zeros(word2vec.vector_size)
+                dftmp = dftmp.append(pd.DataFrame(mean.reshape(-1, len(mean)), index=[i], columns=colnames))
+            dftmp.index.names = ['tweet_id']
+
+            dfr = pd.concat([dfr, dftmp], axis=1)
 
         dfr['has_emoji'] = tweet_has_emoji(df, col_txt=col_txt)
 

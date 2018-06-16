@@ -2,12 +2,12 @@ import pandas as pd
 from sklearn.naive_bayes import BernoulliNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
-from sklearn import svm
+from sklearn.svm import SVC
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 
 import core.train as training
-#get some problems with this imports, do not know why..
+import input.load_data as load_data
 import core.trans as transform
 import output.kaggle_submit as kaggle_submit
 
@@ -34,8 +34,14 @@ class Test:
         self.transpk = None
         self.trainpk = None
 
+        self.kernel="rbf"
+        #self.kernel="sigmoid"
+
 
     def train_validate_test(self, filename=None, verbose=False, kaggle_filename=None, language='english'):
+
+        if verbose:
+            print("Loading Dataset")
 
         if filename is not None:
             self.df = load_data.load_dataset(filename=filename, lan=language)
@@ -53,8 +59,11 @@ class Test:
 
         else:
 
+            if verbose:
+                print("Loading kaggle testing set")
+
             train = self.df
-            test = load_data.load_dataset(filename=kaggle_filename, lan=language)
+            test = load_data.load_dataset(filename=kaggle_filename, encoding='utf-8', lan=language)
 
             generate_kaggle = True
 
@@ -70,17 +79,23 @@ class Test:
             transpk = transform.Trans()
             trainpk = training.Train()
 
-            ctrain, ctrainr = transpk.pre_transform(df=ctrain)
+            ctrain, ctrainr = transpk.pre_transform(df=ctrain, language=language)
 
-            trainpk.fit_bigram(data=ctrain.text, bow_size=1000, language=language)
+            #trainpk.fit_bigram(data=ctrain.text, bow_size=1000, language=language)
+
+            if hasattr(ctrain, 'tokenized_corpus'):
+                trainpk.fit_word2vec(data=ctrain.tokenized_corpus)
 
             #print(trainpk.count_vectorizer.vocabulary_)
-            x_train = transpk.transform(count_vectorizer=trainpk.count_vectorizer, df=ctrain, dfr=ctrainr)
+            #x_train = transpk.transform(count_vectorizer=trainpk.count_vectorizer, df=ctrain, dfr=ctrainr)
+            x_train = transpk.transform(word2vec=trainpk.word2vec, df=ctrain, dfr=ctrainr)
             y_train = ctrain['airline_sentiment'].values
 
-            trainpk.model = RandomForestClassifier(n_estimators=1000, n_jobs=-1)
+            #trainpk.model = RandomForestClassifier(n_estimators=1000, n_jobs=-1)
 
-            #trainpk.model = svm.SVC(kernel='rbf')
+            trainpk.model = SVC(C=1000.0, kernel=self.kernel, degree=3, gamma=0.00010000000000000001, coef0=0.0, shrinking=True,
+                        probability=False, tol=0.001, cache_size=200, class_weight=None, verbose=False, max_iter=-1,
+                        decision_function_shape="ovr", random_state=None)
 
             trainpk.fit(x_train, y_train)
 
@@ -92,7 +107,8 @@ class Test:
 
             if validation_size > 0:
                 validate, validater = transpk.pre_transform(df=validate)
-                x_validate = transpk.transform(count_vectorizer=trainpk.count_vectorizer, df=validate, dfr=validater)
+                #x_validate = transpk.transform(count_vectorizer=trainpk.count_vectorizer, df=validate, dfr=validater)
+                x_validate = transpk.transform(word2vec=trainpk.word2vec, df=validate, dfr=validater)
                 y_validate = validate['airline_sentiment'].values
 
                 y_validate_pred = trainpk.predict(x_validate)
@@ -117,7 +133,8 @@ class Test:
         self.trainpk = best['train']
 
         test, testr = transpk.pre_transform(df=test)
-        x_test = transpk.transform(count_vectorizer=trainpk.count_vectorizer, df=test, dfr=testr)
+        #x_test = transpk.transform(count_vectorizer=trainpk.count_vectorizer, df=test, dfr=testr)
+        x_test = transpk.transform(word2vec=trainpk.word2vec, df=test, dfr=testr)
 
         y_pred = trainpk.predict(x_test)
 
