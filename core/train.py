@@ -11,12 +11,15 @@ from matplotlib.colors import Normalize
 from sklearn.svm import SVC
 from sklearn.preprocessing import StandardScaler
 
+from sklearn.ensemble import RandomForestClassifier
+
 import multiprocessing
 
 from gensim.models import Word2Vec
 
 from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.model_selection import GridSearchCV
+
 
 def encode_sentiment(sentiment, sentiment_options):
     i = 0
@@ -68,12 +71,14 @@ def correlation_to_sentiment(x_train, ctrain, voc, list_correlations=True, list_
 
     return voc
 
+
 class LemmaTokenizer(object):
     def __init__(self):
         self.wnl = WordNetLemmatizer()
 
     def __call__(self, doc):
         return [self.wnl.lemmatize(t) for t in word_tokenize(doc)]
+
 
 class MidpointNormalize(Normalize):
 
@@ -85,12 +90,15 @@ class MidpointNormalize(Normalize):
         x, y = [self.vmin, self.midpoint, self.vmax], [0, 0.5, 1]
         return np.ma.masked_array(np.interp(value, x, y))
 
+
 class Train:
 
     def __init__(self):
         self.count_vectorizer = None
         self.model = None
-        self.word2vec=None
+        self.word2vec = None
+        self.grid = None
+        self.scaler = None
 
     def fit_word2vec(self, data, vector_size=100, window_size=5, min_count=5):
 
@@ -105,6 +113,8 @@ class Train:
 
         self.word2vec = w2vmodel.wv
 
+    def normalize_train_data(self, data):
+        self.scaler = StandardScaler().fit(data)
 
     def get_vocabulary(self, source='bigram'):
 
@@ -114,8 +124,6 @@ class Train:
             return self.word2vec.vocab
         else :
             return None
-
-
 
     def fit_bigram(self, data, bow_size, lemma_extraction=False, language='english'):
 
@@ -141,7 +149,6 @@ class Train:
         self.count_vectorizer.fit(data)
 
         return self.count_vectorizer
-
 
     def get_vocabulary_per_sentiment(self, df, bow_size2, lemma_extraction=False,language_text='english',exclude_neutral=False,col_text='text'):
         # example to call this function...
@@ -194,57 +201,20 @@ class Train:
     # the values of interest.
     # used in optimize_happy_SVC
 
-
-
     def optimize_happy_SVC(self, X, y,kernel="rbf"):
 
-        print("optimization start")
+        print("SVM optimization start")
 
-
-        # It is usually a good idea to scale the data for SVM training.
-        # We are cheating a bit in this example in scaling all of the data,
-        # instead of fitting the transformation on the training set and
-        # just applying it on the test set.
-        #creo que no sería necesaria esta parte
-
-        scaler = StandardScaler()
-        X = scaler.fit_transform(X)
-
-
-        # #############################################################################
-        # Train classifiers
-        #
-        # For an initial search, a logarithmic grid with basis
-        # 10 is often helpful. Using a basis of 2, a finer
-        # tuning can be achieved but at a much higher cost.
-
-        C_range = np.logspace(0, 3, 4)
-        gamma_range = np.logspace(-6, -3, 4)
+        C_range = np.logspace(0, 3, 20)
+        gamma_range = np.logspace(-6, 0, 20)
         param_grid = dict(gamma=gamma_range, C=C_range)
         cv = StratifiedShuffleSplit(n_splits=5, test_size=0.2, random_state=42)
-        grid = GridSearchCV(SVC(), param_grid=param_grid, cv=cv)
+        grid = GridSearchCV(SVC(), param_grid=param_grid, cv=cv, n_jobs=multiprocessing.cpu_count())
         grid.fit(X, y)
 
-        print("The best parameters are %s with a score of %0.2f"
-              % (grid.best_params_, grid.best_score_))
+        print("The best parameters are %s with a score of %0.2f" % (grid.best_params_, grid.best_score_))
 
-        # #############################################################################
-        # Visualization
-        #
-        # draw visualization of parameter effects
-
-
-        scores = grid.cv_results_['mean_test_score'].reshape(len(C_range),
-                                                             len(gamma_range))
-
-        # Draw heatmap of the validation accuracy as a function of gamma and C
-        #
-        # The score are encoded as colors with the hot colormap which varies from dark
-        # red to bright yellow. We select a mid point near max accuracy
-        # to make it easier to visualize the small variations of score values in the
-        # interesting range while not brutally collapsing all the low score values to
-        # the same color.
-
+        scores = grid.cv_results_['mean_test_score'].reshape(len(C_range), len(gamma_range))
         plt.figure(figsize=(8, 6))
         plt.subplots_adjust(left=.2, right=0.95, bottom=0.15, top=0.95)
         plt.imshow(scores, interpolation='nearest', cmap=plt.cm.hot,
@@ -254,13 +224,51 @@ class Train:
         plt.colorbar()
         plt.xticks(np.arange(len(gamma_range)), gamma_range, rotation=45)
         plt.yticks(np.arange(len(C_range)), C_range)
-        plt.title('Validation accuracy')
+        plt.title('SM Validation accuracy')
         plt.show()
 
         #finally we create a model with best parameters
         self.model = SVC(C=grid.best_params_['C'], kernel=kernel, gamma=grid.best_params_['gamma'], shrinking=True,
                            probability=False, tol=0.001, cache_size=200, class_weight=None, verbose=False, max_iter=-1,
                           decision_function_shape="ovr", random_state=None)
+
+        self.grid = grid
+
+    def optimize_happy_RF(self, X, y):
+
+        print("Random Forest optimization start")
+
+        n_estimators = np.logspace(1, 3, 20, dtype=np.dtype('int'))
+        max_depth = np.logspace(0.75, 2.75, 20, dtype=np.dtype('int'))
+        #max_features = ['auto', 'sqrt', 'log2']
+        param_grid = dict(n_estimators=n_estimators, max_depth=max_depth)
+        cv = StratifiedShuffleSplit(n_splits=5, test_size=0.2, random_state=42)
+        grid = GridSearchCV(RandomForestClassifier(), param_grid=param_grid, cv=cv, n_jobs=multiprocessing.cpu_count())
+        grid.fit(X, y)
+
+        print("The best parameters are %s with a score of %0.2f"
+              % (grid.best_params_, grid.best_score_))
+
+        scores = grid.cv_results_['mean_test_score'].reshape(len(max_depth),
+                                                             len(n_estimators))
+
+        plt.figure(figsize=(8, 6))
+        plt.subplots_adjust(left=.2, right=0.95, bottom=0.15, top=0.95)
+        plt.imshow(scores, interpolation='nearest', cmap=plt.cm.hot,
+                   norm=MidpointNormalize(vmin=0.45, midpoint=grid.best_score_ - 0.05))
+        plt.xlabel('n_estimators')
+        plt.ylabel('max_depth')
+        plt.colorbar()
+        plt.xticks(np.arange(len(n_estimators)), n_estimators, rotation=45)
+        plt.yticks(np.arange(len(max_depth)), max_depth)
+        plt.title('RF Validation accuracy')
+        plt.show()
+
+        self.model = RandomForestClassifier(n_estimators=grid.best_params_['n_estimators'],
+                                            max_depth=grid.best_params_['max_depth'],
+                                            n_jobs=multiprocessing.cpu_count())
+
+        self.grid = grid
 
     def fit(self, x_train, y_train):
         self.model.fit(x_train, y_train)

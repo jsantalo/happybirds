@@ -38,7 +38,7 @@ class Test:
         #self.kernel="sigmoid"
 
 
-    def train_validate_test(self, filename=None, verbose=False, kaggle_filename=None, language='english'):
+    def train_validate_test(self, filename=None, verbose=False, kaggle_filename=None, language='english', mode='standard', normalize=False):
 
         if verbose:
             print("Loading Dataset")
@@ -48,16 +48,16 @@ class Test:
         else:
             self.df = load_data.load_dataset(lan=language)
 
-        validation_size = self.validation_size
-        n_iterations = self.n_iterations
-
-        if kaggle_filename is None:
+        if mode == 'standard':
+            validation_size = self.validation_size
+            n_iterations = self.n_iterations
 
             train, test = train_test_split(self.df, test_size=self.test_size)
 
-            generate_kaggle = False
+        elif mode == 'kaggle':
 
-        else:
+            validation_size = self.validation_size
+            n_iterations = self.n_iterations
 
             if verbose:
                 print("Loading kaggle testing set")
@@ -65,7 +65,11 @@ class Test:
             train = self.df
             test = load_data.load_dataset(filename=kaggle_filename, encoding='utf-8', lan=language)
 
-            generate_kaggle = True
+        elif mode == 'optimize':
+            validation_size = 0
+            n_iterations = 1
+
+            train = self.df
 
         rdf = pd.DataFrame(columns=['score_train', 'score_validate', 'trans', 'train'])
 
@@ -81,21 +85,49 @@ class Test:
 
             ctrain, ctrainr = transpk.pre_transform(df=ctrain, language=language)
 
-            #trainpk.fit_bigram(data=ctrain.text, bow_size=1000, language=language)
+            trainpk.fit_bigram(data=ctrain.text, bow_size=100, language=language)
 
             if hasattr(ctrain, 'tokenized_corpus'):
                 trainpk.fit_word2vec(data=ctrain.tokenized_corpus)
 
             #print(trainpk.count_vectorizer.vocabulary_)
             #x_train = transpk.transform(count_vectorizer=trainpk.count_vectorizer, df=ctrain, dfr=ctrainr)
-            x_train = transpk.transform(word2vec=trainpk.word2vec, df=ctrain, dfr=ctrainr)
+            x_train = transpk.transform(count_vectorizer=trainpk.count_vectorizer, word2vec=trainpk.word2vec, df=ctrain, dfr=ctrainr)
             y_train = ctrain['airline_sentiment'].values
 
-            #trainpk.model = RandomForestClassifier(n_estimators=1000, n_jobs=-1)
+            if normalize:
+                trainpk.normalize_train_data(x_train)
 
-            trainpk.model = SVC(C=1000.0, kernel=self.kernel, degree=3, gamma=0.00010000000000000001, coef0=0.0, shrinking=True,
-                        probability=False, tol=0.001, cache_size=200, class_weight=None, verbose=False, max_iter=-1,
-                        decision_function_shape="ovr", random_state=None)
+            if mode == 'optimize':
+                if normalize:
+                    trainpk.optimize_happy_SVC(transform.normalize_validate_data(trainpk.scaler, x_train), y_train)
+                else:
+                    trainpk.optimize_happy_SVC(x_train, y_train)
+                print('SVM optimization done')
+                #trainpk.optimize_happy_RF(x_train, y_train)
+                #print('RF optimization done')
+                #self.transpk = transpk
+                #self.trainpk = trainpk
+                return 0
+            else:
+
+                if normalize:
+                    x_train = transform.normalize_validate_data(trainpk.scaler, x_train)
+
+                ### Init RF testing
+                # trainpk.model = RandomForestClassifier(n_estimators=1000, n_jobs=-1)
+
+                ### The best parameters are {'max_depth': 11, 'n_estimators': 112} with a score of 0.59
+                #trainpk.model = RandomForestClassifier(n_estimators=112, max_depth=11, n_jobs=-1)
+
+                ### The best parameters are {'C': 1.0, 'gamma': 0.00615848211066026} with a score of 0.61
+                #trainpk.model = SVC(C=1, kernel=self.kernel, degree=3, gamma=0.00615848211066026, coef0=0.0,
+                #                    shrinking=True, probability=False, tol=0.001, cache_size=200, class_weight=None,
+                #                    verbose=False, max_iter=-1, decision_function_shape="ovr", random_state=None)
+
+                trainpk.model = SVC(C=1.4384498882876628, kernel=self.kernel, gamma=0.00615848211066026, shrinking=True,
+                    probability=False, tol=0.001, cache_size=200, class_weight=None, verbose=False, max_iter=-1,
+                    decision_function_shape="ovr", random_state=None)
 
             trainpk.fit(x_train, y_train)
 
@@ -108,7 +140,11 @@ class Test:
             if validation_size > 0:
                 validate, validater = transpk.pre_transform(df=validate)
                 #x_validate = transpk.transform(count_vectorizer=trainpk.count_vectorizer, df=validate, dfr=validater)
-                x_validate = transpk.transform(word2vec=trainpk.word2vec, df=validate, dfr=validater)
+                x_validate = transpk.transform(count_vectorizer=trainpk.count_vectorizer, word2vec=trainpk.word2vec, df=validate, dfr=validater)
+
+                if normalize:
+                    x_validate = transform.normalize_validate_data(trainpk.scaler, x_validate)
+
                 y_validate = validate['airline_sentiment'].values
 
                 y_validate_pred = trainpk.predict(x_validate)
@@ -134,15 +170,17 @@ class Test:
 
         test, testr = transpk.pre_transform(df=test)
         #x_test = transpk.transform(count_vectorizer=trainpk.count_vectorizer, df=test, dfr=testr)
-        x_test = transpk.transform(word2vec=trainpk.word2vec, df=test, dfr=testr)
+        x_test = transpk.transform(count_vectorizer=trainpk.count_vectorizer, word2vec=trainpk.word2vec, df=test, dfr=testr)
+
+        if normalize:
+            x_test = transform.normalize_validate_data(trainpk.scaler, x_test)
 
         y_pred = trainpk.predict(x_test)
 
-        if generate_kaggle:
+        if mode == 'kaggle':
             kaggle_submit.create_submit_file(test, y_pred)
             score_test = None
-
-        else:
+        elif mode == 'standard':
             y_test = test['airline_sentiment'].values
             score_test = score_model(y_test, y_pred)
 

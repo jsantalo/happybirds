@@ -236,7 +236,7 @@ class MeanEmbeddingVectorizer(object):
 
 def tokenization (data, col_txt='text', language='english'):
 
-    tkr = RegexpTokenizer('[a-zA-Z0-9@]+')
+    tkr = RegexpTokenizer('[a-zA-Z@]+')
     # stemmer = LancasterStemmer()
     stemmer = SnowballStemmer(language)
 
@@ -247,6 +247,10 @@ def tokenization (data, col_txt='text', language='english'):
         tokenized_corpus.append(tokens)
 
     return tokenized_corpus
+
+
+def normalize_validate_data(scaler, data):
+    return scaler.transform(data)
 
 
 class Trans:
@@ -274,18 +278,25 @@ class Trans:
 
         # Column to count uppercase ratio
         dfr['upper_ratio'] = uppercase_ratio_extract_dataframe(df, col_txt=col_text)
+
+        df[col_text] = df[col_text].apply(lambda x: x.lower())
+
+        dfr['has_emoji'] = tweet_has_emoji(df, col_txt=col_text)
+
+        dfr['text_length'] = count_text_length_dataframe(df, col_txt=col_text)
+        # number of emojis in text can replace tweet_has_emoji --> comment on Wednesday
+        dfr['num_emoji'] = add_emoji_len_column_to_df(df, col_txt=col_text)
         
         #df[col_text], dfr['puntuation_removed'] = zip(*df[col_text].apply(count_and_remove_puntuation))
         df[col_text], dfr['3dot'] = zip(*df[col_text].apply(count_and_remove_3dot))
         df[col_text], dfr['question_marks'] = zip(*df[col_text].apply(count_and_remove_qmark))
         df[col_text], dfr['exclamation'] = zip(*df[col_text].apply(count_and_remove_exclamation))
         df[col_text], dfr['single_dot'] = zip(*df[col_text].apply(count_and_remove_single_dot)) #always after 3 dot extraction
-        df[col_text], dfr['number_of_subs_made'] = zip(*df[col_text].apply(remove_repeated))
+        #df[col_text], dfr['number_of_subs_made'] = zip(*df[col_text].apply(remove_repeated))
         #very few in english text [~16 from 4941 tweets]
         #I am getting a warning "variable is trying to set a copy of itself" --> how to deal with it??
 
         #df = clean_text_lemmatize(df)
-        df[col_text] = df[col_text].apply(lambda x: x.lower())
 
         df['tokenized_corpus'] = tokenization(df, col_txt=col_text, language=language);
 
@@ -325,12 +336,6 @@ class Trans:
 
             dfr = pd.concat([dfr, dftmp], axis=1)
 
-        dfr['has_emoji'] = tweet_has_emoji(df, col_txt=col_txt)
-
-        dfr['text_length'] = count_text_length_dataframe(df, col_txt=col_txt)
-        #number of emojis in text can replace tweet_has_emoji --> comment on Wednesday
-        dfr['num_emoji']=add_emoji_len_column_to_df(df, col_txt=col_txt)
-
         #hot encoding of 'negativereason' and add columns to 'dfr'
         #dfr = create_hot_encoding_dataframe(dfr, df)
 
@@ -354,17 +359,6 @@ class Trans:
         #dfr = emoji_hot_encoding(df, dfr, emoji_sorted_dict)
 
         return dfr
-
-    def normalize_train_data(self, dfr):
-        #normalize data to the mean and variance of train data
-        self.scaler = StandardScaler()
-        dfr = self.scaler.fit_transform(dfr)
-        return dfr
-    def normalize_validate_data(self, validate):
-        #normalize validate data with the mean and variance of train data.
-        #Must ve called after "normalize_train_data"
-        validate = self.scaler.transform(validate)
-        return validate
 
     # analyze which emojis appear more frequently.
     # Once we know the more frequents, classify as positive or negative taking into account the correlation with other P/N tweets
